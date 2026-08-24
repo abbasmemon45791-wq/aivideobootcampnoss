@@ -304,15 +304,12 @@ function Step2({
       // GA4 funnel tracking
       fireGA4Event('begin_checkout', { value: COURSE_PRICE, currency: 'PKR' })
 
-      setDone(true)
-
-      // Automatically open WhatsApp with pre-filled message
+      // Send customer directly to WhatsApp with prefilled message
       if (typeof window !== 'undefined') {
-        window.open(waUrl, '_blank')
+        window.location.href = waUrl
       }
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
-    } finally {
       setLoading(false)
     }
   }
