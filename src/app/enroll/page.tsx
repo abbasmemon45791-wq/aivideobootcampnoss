@@ -217,25 +217,26 @@ function Step2({
   const waMessage = `Hi! I have sent Rs. ${COURSE_PRICE.toLocaleString()} for the AI Video Bootcamp.\n\nName: ${userData.name || 'Student'}\nEmail: ${userData.email || ''}\nWhatsApp: ${userData.whatsapp || ''}\n\nI am attaching my payment screenshot below:`
   const waUrl = `https://wa.me/${WHATSAPP_SUPPORT}?text=${encodeURIComponent(waMessage)}`
 
-  const confirmPayment = async () => {
+  const confirmPayment = () => {
     setLoading(true)
     setErr(null)
+
     try {
-      const res = await fetch('/api/submit-payment', {
+      // 1. GA4 funnel tracking
+      fireGA4Event('begin_checkout', { value: COURSE_PRICE, currency: 'PKR' })
+
+      // 2. Fire backend payment record submission in background with keepalive
+      fetch('/api/submit-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           leadId,
           amount: COURSE_PRICE,
         }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
+        keepalive: true,
+      }).catch(e => console.error('[submit-payment error]', e))
 
-      // GA4 funnel tracking
-      fireGA4Event('begin_checkout', { value: COURSE_PRICE, currency: 'PKR' })
-
-      // Send customer directly to WhatsApp with prefilled message
+      // 3. Instant redirect to WhatsApp without waiting for network roundtrip
       if (typeof window !== 'undefined') {
         window.location.href = waUrl
       }
