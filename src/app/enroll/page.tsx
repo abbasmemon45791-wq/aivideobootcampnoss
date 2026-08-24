@@ -275,13 +275,16 @@ function Step2({
   onOpenModal,
 }: {
   leadId: string
-  userData: { email: string; whatsapp: string }
+  userData: { name: string; email: string; whatsapp: string }
   onBack: () => void
   onOpenModal?: () => void
 }) {
   const [loading, setLoading]   = useState(false)
   const [err, setErr]           = useState<string | null>(null)
   const [done, setDone]         = useState(false)
+
+  const waMessage = `Hi! I have sent Rs. ${COURSE_PRICE.toLocaleString()} for the AI Video Bootcamp.\n\nName: ${userData.name || 'Student'}\nEmail: ${userData.email || ''}\nWhatsApp: ${userData.whatsapp || ''}\n\nI am attaching my payment screenshot below:`
+  const waUrl = `https://wa.me/${WHATSAPP_SUPPORT}?text=${encodeURIComponent(waMessage)}`
 
   const confirmPayment = async () => {
     setLoading(true)
@@ -298,14 +301,15 @@ function Step2({
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
 
-      // NOTE: NO purchase conversion fired here.
-      // Purchase fires server-side via GA4 Measurement Protocol when admin approves.
-      // This prevents fake/unverified conversions from reaching Google.
-
-      // GA4 — fire begin_checkout for funnel tracking (not a conversion)
+      // GA4 funnel tracking
       fireGA4Event('begin_checkout', { value: COURSE_PRICE, currency: 'PKR' })
 
       setDone(true)
+
+      // Automatically open WhatsApp with pre-filled message
+      if (typeof window !== 'undefined') {
+        window.open(waUrl, '_blank')
+      }
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
     } finally {
@@ -316,25 +320,29 @@ function Step2({
   if (done) {
     return (
       <div className="text-center py-4">
-        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full text-white shadow-[0_0_30px_rgba(37,99,235,0.4)]"
-          style={{ background: 'linear-gradient(135deg,#2563eb,#06b6d4)' }}>
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full text-white shadow-[0_0_30px_rgba(16,185,129,0.4)] bg-emerald-500">
           <Check className="h-8 w-8" />
         </div>
-        <h2 className="mt-4 font-['Sora'] text-2xl font-extrabold"
-          style={{ background: 'linear-gradient(135deg,#2563eb,#06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          You&apos;re In!
+        <h2 className="mt-4 font-['Sora'] text-2xl font-extrabold text-slate-900">
+          Almost Done!
         </h2>
-        <p className="mt-3 text-sm text-slate-800 font-semibold leading-relaxed max-w-sm mx-auto">
-          Payment received! Our team will verify and send your course access within a few hours via WhatsApp and email.
+        <p className="mt-2 text-sm text-slate-700 font-medium leading-relaxed max-w-sm mx-auto">
+          Please click below to <strong>send your payment screenshot on WhatsApp</strong> so our team can immediately verify and activate your access.
         </p>
-        <a href={`https://wa.me/${WHATSAPP_SUPPORT}?text=${encodeURIComponent(`Hi! I've completed my payment for the AI Bootcamp (Rs. 2,900). Please confirm my enrollment.`)}`}
-          target="_blank" rel="noopener noreferrer"
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-4 text-base font-semibold text-white shadow-lg transition-transform hover:scale-[1.02]">
-          <MessageCircle className="h-5 w-5" />
-          Message us on WhatsApp to confirm
+
+        <a
+          href={waUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-5 inline-flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] px-6 py-4 text-base font-bold text-white shadow-xl transition-transform hover:scale-[1.02] hover:bg-[#20bd5a]"
+        >
+          <MessageCircle className="h-6 w-6" />
+          Send Screenshot on WhatsApp
         </a>
-        <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-emerald-600 font-semibold">
-          <CheckCircle className="h-4 w-4" /> Access will be sent within a few hours
+
+        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-xs text-emerald-800 font-medium">
+          <CheckCircle className="inline-block h-4 w-4 mr-1 text-emerald-600 align-text-bottom" />
+          Your details are saved. Once verified on WhatsApp, access will be emailed & sent via message.
         </div>
       </div>
     )
@@ -403,11 +411,15 @@ function Step2({
       )}
 
       <button onClick={confirmPayment} disabled={loading}
-        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-base font-semibold text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-transform hover:scale-[1.02] disabled:opacity-70"
-        style={{ background: 'linear-gradient(135deg,#2563eb,#06b6d4)' }}>
+        className="mt-5 inline-flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] px-6 py-4 text-base font-bold text-white shadow-lg transition-transform hover:scale-[1.02] hover:bg-[#20bd5a] disabled:opacity-70">
         {loading
-          ? <><LoaderCircle className="h-4 w-4 animate-spin" /> Processing…</>
-          : <>I&apos;ve Sent the Payment <ArrowRight className="h-5 w-5" /></>}
+          ? <><LoaderCircle className="h-5 w-5 animate-spin" /> Saving…</>
+          : <>
+              <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 shrink-0">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 5.834h-.004c-1.271-.05-2.521-.349-3.67-.877l-.263-.119-2.727.716.73-2.66-.172-.273a7.53 7.53 0 0 1-1.16-4.03c0-4.188 3.406-7.592 7.594-7.592 4.188 0 7.592 3.404 7.592 7.592 0 4.188-3.404 7.593-7.592 7.593m6.743-13.831c-1.807-1.808-4.209-2.804-6.765-2.804-5.27 0-9.56 4.29-9.56 9.56 0 1.683.439 3.321 1.271 4.762l-1.351 4.94 5.051-1.324a9.55 9.55 0 0 0 4.589 1.173c5.27 0 9.56-4.29 9.56-9.56 0-2.556-.996-4.958-2.795-6.767" />
+              </svg>
+              <span>I&apos;ve Paid — Send Screenshot on WhatsApp</span>
+            </>}
       </button>
 
       <button onClick={onBack}
@@ -425,7 +437,7 @@ function Step2({
 export default function EnrollPage() {
   const [step, setStep]   = useState(1)
   const [leadId, setLeadId] = useState<string | null>(null)
-  const [userData, setUserDataState] = useState<{ email: string; whatsapp: string }>({ email: '', whatsapp: '' })
+  const [userData, setUserDataState] = useState<{ name: string; email: string; whatsapp: string }>({ name: '', email: '', whatsapp: '' })
   const [showRetentionModal, setShowRetentionModal] = useState(false)
 
   useEffect(() => {
@@ -523,7 +535,7 @@ export default function EnrollPage() {
             {step === 1 && (
               <Step1 onDone={(id, data) => {
                 setLeadId(id)
-                setUserDataState({ email: data.email, whatsapp: data.whatsapp })
+                setUserDataState({ name: data.name, email: data.email, whatsapp: data.whatsapp })
                 setStep(2)
               }} />
             )}
