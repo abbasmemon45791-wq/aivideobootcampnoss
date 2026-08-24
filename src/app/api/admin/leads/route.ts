@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
   // Fetch lead for conversion data
   const { data: lead } = await supabaseAdmin
     .from('leads')
-    .select('id, name, email, whatsapp, gclid')
+    .select('id, name, email, whatsapp, gclid, site, utm_content')
     .eq('id', leadId)
     .maybeSingle()
 
@@ -130,8 +130,7 @@ export async function POST(req: NextRequest) {
         coursePrice = Number(p.amount)
       }
     } else {
-      const isNoss = lead.site === 'techpulse-noss' || lead.utm_content?.includes('[site:techpulse-noss]')
-      coursePrice = isNoss ? 1999 : (Number(process.env.COURSE_PRICE) || 2900)
+      coursePrice = Number(process.env.COURSE_PRICE) || 1999
     }
 
     // ── 1. GA4 Measurement Protocol (server-side) ─────────────────────────
