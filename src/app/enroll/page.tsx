@@ -7,6 +7,9 @@ import {
   AlertCircle, CheckCircle, MessageCircle, Star, Sparkles, X
 } from 'lucide-react'
 
+// GA4 event helper (browser-side — for non-purchase events only)
+// Purchase is fired server-side via GA4 Measurement Protocol on admin approval
+
 const COURSE_PRICE = 2900
 const EASYPAISA_NUMBER = process.env.NEXT_PUBLIC_EASYPAISA_NUMBER ?? '03458996578'
 const JAZZCASH_NUMBER  = process.env.NEXT_PUBLIC_JAZZCASH_NUMBER  ?? '03180236635'
@@ -16,27 +19,10 @@ const WHATSAPP_SUPPORT = process.env.NEXT_PUBLIC_WHATSAPP_SUPPORT ?? '9231802980
 
 const STEP_LABELS: Record<number, string> = { 1: 'Your Details', 2: 'Send Payment' }
 
-// ── Google Ads helpers ──────────────────────────────────────────────────────
-function gtagSafe(
-  params: Record<string, unknown>,
-  userData?: { email: string; phone: string }
-) {
-  const fire = () => {
-    if (typeof window === 'undefined' || !(window as any).gtag) return
-    if (userData) {
-      const normPhone = userData.phone.replace(/\D/g, '')
-      const e164 = normPhone.startsWith('92') ? `+${normPhone}` :
-                   normPhone.startsWith('0')  ? `+92${normPhone.slice(1)}` :
-                   `+${normPhone}`
-      ;(window as any).gtag('set', 'user_data', { email: userData.email, phone_number: e164 })
-    }
-    ;(window as any).gtag('event', 'conversion', params)
-  }
-  if (typeof window !== 'undefined' && (window as any).gtag) {
-    fire()
-  } else {
-    setTimeout(fire, 1500)
-  }
+// ── GA4 event helper ──────────────────────────────────────────────────────
+function fireGA4Event(eventName: string, params: Record<string, unknown>) {
+  if (typeof window === 'undefined' || !(window as any).gtag) return
+  ;(window as any).gtag('event', eventName, params)
 }
 
 // ── Step Indicator ─────────────────────────────────────────────────────────
@@ -127,14 +113,8 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
         (window as any).fbq('track', 'Lead', {}, { eventID: leadEventId })
       }
 
-      gtagSafe(
-        {
-          send_to: `${process.env.NEXT_PUBLIC_GA_ID}/${process.env.NEXT_PUBLIC_GA_LEAD_LABEL}`,
-          value: COURSE_PRICE,
-          currency: 'PKR',
-        },
-        { email: email.trim().toLowerCase(), phone: wa.trim() }
-      )
+      // GA4 — fire generate_lead event for audience building (not a conversion)
+      fireGA4Event('generate_lead', { value: COURSE_PRICE, currency: 'PKR' })
 
       onDone(data.id, { name: name.trim(), email: email.trim().toLowerCase(), whatsapp: wa.trim() })
     } catch (e: unknown) {
@@ -307,36 +287,23 @@ function Step2({
     setLoading(true)
     setErr(null)
     try {
-      const purchaseEventId = crypto.randomUUID()
-
       const res = await fetch('/api/submit-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           leadId,
-          eventId: purchaseEventId,
-          // no screenshot — amount known
           amount: COURSE_PRICE,
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
 
-      // Fire fbq Purchase
-      if (typeof window !== 'undefined' && (window as any).fbq) {
-        (window as any).fbq('track', 'Purchase', { value: COURSE_PRICE, currency: 'PKR' }, { eventID: purchaseEventId })
-      }
+      // NOTE: NO purchase conversion fired here.
+      // Purchase fires server-side via GA4 Measurement Protocol when admin approves.
+      // This prevents fake/unverified conversions from reaching Google.
 
-      // Fire Google Ads Purchase conversion with Enhanced Conversions
-      gtagSafe(
-        {
-          send_to: `${process.env.NEXT_PUBLIC_GA_ID}/${process.env.NEXT_PUBLIC_GA_PURCHASE_LABEL}`,
-          value: COURSE_PRICE,
-          currency: 'PKR',
-          transaction_id: purchaseEventId,
-        },
-        { email: userData.email, phone: userData.whatsapp }
-      )
+      // GA4 — fire begin_checkout for funnel tracking (not a conversion)
+      fireGA4Event('begin_checkout', { value: COURSE_PRICE, currency: 'PKR' })
 
       setDone(true)
     } catch (e: unknown) {

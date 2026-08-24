@@ -20,12 +20,13 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const AW_ID = process.env.NEXT_PUBLIC_GA_ID || 'AW-18327926458'
+  // GA4 Measurement ID — set NEXT_PUBLIC_GA4_ID in your .env.local
+  const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID || 'G-XXXXXXXXXX'
 
   return (
     <html lang="en" className={`${inter.variable} ${sora.variable} ${jakarta.variable}`}>
       <body className="font-[Inter,sans-serif] antialiased">
-        {/* Meta Pixel Code */}
+        {/* Meta Pixel */}
         <Script id="meta-pixel" strategy="afterInteractive">
           {`
             !function(f,b,e,v,n,t,s)
@@ -36,23 +37,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             t.src=v;s=b.getElementsByTagName(e)[0];
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '2170349516868440');
+            fbq('init', '${process.env.NEXT_PUBLIC_FB_PIXEL_ID ?? 'YOUR_PIXEL_ID'}');
             fbq('track', 'PageView');
           `}
         </Script>
 
-        {/* Google Ads gtag — must load BEFORE any conversion calls */}
+        {/* Google Analytics 4 — gtag.js */}
         <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${AW_ID}`}
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`}
           strategy="afterInteractive"
         />
-        <Script id="google-ads-init" strategy="afterInteractive">
+        <Script id="ga4-init" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '${AW_ID}', {
-              allow_enhanced_conversions: true
+            gtag('config', '${GA4_ID}', {
+              allow_enhanced_conversions: true,
+              send_page_view: true
             });
           `}
         </Script>
