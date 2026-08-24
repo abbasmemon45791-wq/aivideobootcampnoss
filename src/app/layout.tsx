@@ -20,8 +20,8 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // GA4 Measurement ID — set NEXT_PUBLIC_GA4_ID in your .env.local
-  const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID || 'G-XXXXXXXXXX'
+  // GA4 Measurement ID
+  const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID || 'G-Y2SZLNREPD'
 
   return (
     <html lang="en" className={`${inter.variable} ${sora.variable} ${jakarta.variable}`}>

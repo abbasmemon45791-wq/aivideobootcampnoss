@@ -121,8 +121,8 @@ export async function POST(req: NextRequest) {
     // This is guaranteed delivery — no ad blockers, no page-load timing issues.
     // Requires: NEXT_PUBLIC_GA4_ID (G-XXXXXXXXXX) + GA4_API_SECRET (from GA4 → Admin → Data Streams → Measurement Protocol API secrets)
     try {
-      const GA4_ID     = process.env.NEXT_PUBLIC_GA4_ID   // e.g. G-XXXXXXXXXX
-      const API_SECRET = process.env.GA4_API_SECRET        // from GA4 Admin → Data Streams → Measurement Protocol API secrets
+      const GA4_ID     = process.env.NEXT_PUBLIC_GA4_ID || 'G-Y2SZLNREPD'
+      const API_SECRET = process.env.GA4_API_SECRET || 'ZCnSzNHmT5Cte3cAOZ8rVQ'
 
       if (GA4_ID && API_SECRET) {
         await fetch(
