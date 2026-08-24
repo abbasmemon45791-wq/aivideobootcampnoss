@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url)
   const status    = url.searchParams.get('status')
   const source    = url.searchParams.get('source')
+  const site      = url.searchParams.get('site')
   const search    = url.searchParams.get('search')
   const startDate = url.searchParams.get('startDate')
   const endDate   = url.searchParams.get('endDate')
@@ -53,6 +54,9 @@ export async function GET(req: NextRequest) {
 
   if (status) query = query.eq('status', status)
   if (source && source !== 'all') query = query.eq('source', source)
+  if (site && site !== 'all') {
+    query = query.or(`site.eq.${site},utm_content.ilike.%[site:${site}]%`)
+  }
 
   if (search) {
     query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,whatsapp.ilike.%${search}%`)

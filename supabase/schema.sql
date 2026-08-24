@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS leads (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   
   -- Tracking columns
+  site VARCHAR(100) DEFAULT 'techpulse-replica', -- 'techpulse-replica' | 'techpulse-noss'
   source VARCHAR(50) DEFAULT 'direct',
   utm_medium VARCHAR(100),
   utm_campaign VARCHAR(100),
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS leads (
 -- RUN THIS MIGRATION IF TABLE ALREADY EXISTS:
 -- ==========================================
 -- ALTER TABLE leads 
+--   ADD COLUMN IF NOT EXISTS site VARCHAR(100) DEFAULT 'techpulse-replica',
 --   ADD COLUMN IF NOT EXISTS source VARCHAR(50) DEFAULT 'direct',
 --   ADD COLUMN IF NOT EXISTS utm_medium VARCHAR(100),
 --   ADD COLUMN IF NOT EXISTS utm_campaign VARCHAR(100),
