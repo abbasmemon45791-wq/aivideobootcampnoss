@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       .from('payments')
       .insert({
         lead_id: leadId,
-        amount: amount ?? 2900,
+        amount: amount ?? 1999,
         ai_verified: false,
       })
 

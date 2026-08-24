@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
 
   const url = new URL(req.url)
   const status    = url.searchParams.get('status')
+  const source    = url.searchParams.get('source')
   const search    = url.searchParams.get('search')
   const startDate = url.searchParams.get('startDate')
   const endDate   = url.searchParams.get('endDate')
@@ -51,6 +52,7 @@ export async function GET(req: NextRequest) {
     .range(offset, offset + limit - 1)
 
   if (status) query = query.eq('status', status)
+  if (source && source !== 'all') query = query.eq('source', source)
 
   if (search) {
     query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,whatsapp.ilike.%${search}%`)
@@ -115,7 +117,7 @@ export async function POST(req: NextRequest) {
   // ── Fire conversion events only on APPROVE ────────────────────────────────
   if (action === 'approve' && lead) {
     const transactionId = `lead_${leadId}_${Date.now()}`
-    const coursePrice   = Number(process.env.COURSE_PRICE) || 2900
+    const coursePrice   = Number(process.env.COURSE_PRICE) || 1999
 
     // ── 1. GA4 Measurement Protocol (server-side) ─────────────────────────
     // This is guaranteed delivery — no ad blockers, no page-load timing issues.

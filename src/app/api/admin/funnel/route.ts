@@ -24,9 +24,13 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
+    const source = searchParams.get('source')
 
-    let query = supabaseAdmin.from('leads').select('status, created_at')
+    let query = supabaseAdmin.from('leads').select('status, created_at, source')
 
+    if (source && source !== 'all') {
+      query = query.eq('source', source)
+    }
     if (startDate) {
       query = query.gte('created_at', new Date(startDate).toISOString())
     }

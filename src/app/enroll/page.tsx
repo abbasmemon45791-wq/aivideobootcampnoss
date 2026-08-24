@@ -10,7 +10,7 @@ import {
 // GA4 event helper (browser-side — for non-purchase events only)
 // Purchase is fired server-side via GA4 Measurement Protocol on admin approval
 
-const COURSE_PRICE = 2900
+const COURSE_PRICE = 1999
 const EASYPAISA_NUMBER = process.env.NEXT_PUBLIC_EASYPAISA_NUMBER ?? '03458996578'
 const JAZZCASH_NUMBER  = process.env.NEXT_PUBLIC_JAZZCASH_NUMBER  ?? '03180236635'
 const HBL_ACCOUNT      = process.env.NEXT_PUBLIC_HBL_ACCOUNT      ?? '22567902223303'
