@@ -2,9 +2,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
-  ArrowLeft, ArrowRight, User, Wallet, Check,
+  ArrowLeft, User, Wallet, Check,
   Lock, LoaderCircle, Copy, Shield,
-  AlertCircle, CheckCircle, MessageCircle, Star, Sparkles, X
+  AlertCircle, Star
 } from 'lucide-react'
 
 // GA4 event helper (browser-side — for non-purchase events only)
@@ -113,7 +113,7 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
         (window as any).fbq('track', 'Lead', {}, { eventID: leadEventId })
       }
 
-      // GA4 — fire generate_lead event for audience building (not a conversion)
+      // GA4 — fire generate_lead event for audience building
       fireGA4Event('generate_lead', { value: COURSE_PRICE, currency: 'PKR' })
 
       onDone(data.id, { name: name.trim(), email: email.trim().toLowerCase(), whatsapp: wa.trim() })
@@ -168,7 +168,7 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
         style={{ background: 'linear-gradient(135deg,#2563eb,#06b6d4)' }}>
         {loading
           ? <><LoaderCircle className="h-4 w-4 animate-spin" /> Saving…</>
-          : <>Continue to Payment <ArrowRight className="h-5 w-5" /></>}
+          : <>Continue to Payment →</>}
       </button>
 
       <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-400">
@@ -201,87 +201,18 @@ function BankRow({ bank, title, num, colorClass = "text-slate-500" }: { bank: st
   )
 }
 
-// ── Payment Retention Modal ─────────────────────────────────────────────────
-function PaymentRetentionModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  if (!isOpen) return null
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200">
-        <div className="relative px-6 py-4 text-white" style={{ background: 'linear-gradient(135deg,#2563eb,#06b6d4)' }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-amber-300" />
-              <span className="font-['Sora'] text-base font-extrabold tracking-wide">Seat Discount Locked!</span>
-            </div>
-            <button onClick={onClose}
-              className="grid h-8 w-8 place-items-center rounded-full bg-white/20 text-white transition hover:bg-white/30">
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-        <div className="p-5 sm:p-6 text-slate-800">
-          <div className="flex items-center justify-around rounded-2xl bg-slate-50 p-3 text-center border border-slate-100 shadow-inner">
-            <div>
-              <div className="font-['Sora'] text-lg font-extrabold text-blue-600">1,127</div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Members</div>
-            </div>
-            <div className="h-8 w-px bg-slate-200" />
-            <div>
-              <div className="font-['Sora'] text-lg font-extrabold text-emerald-600">41</div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Online</div>
-            </div>
-            <div className="h-8 w-px bg-slate-200" />
-            <div>
-              <div className="font-['Sora'] text-lg font-extrabold text-cyan-600">1</div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Admin Active</div>
-            </div>
-          </div>
-          <p className="mt-4 text-xs leading-relaxed text-slate-600">
-            <strong>1,120+ students</strong> already join ho chuke hain — course fee <strong>PKR 7,999</strong> hone wali hai.
-          </p>
-          <p className="mt-2 text-xs leading-relaxed text-slate-600">
-            Aapka seat discount (<strong>PKR 2,900</strong>) temporarily reserve kar liya gaya hai.
-          </p>
-          <div className="mt-4 rounded-2xl border border-blue-200/80 bg-blue-50/40 p-4 text-center">
-            <div className="flex items-center justify-center gap-3">
-              <span className="font-['Sora'] text-3xl font-extrabold text-emerald-600">PKR 2,900</span>
-              <span className="text-base text-slate-400 line-through">PKR 7,999</span>
-            </div>
-            <div className="mt-1.5 flex items-center justify-center gap-1 text-[11px] font-bold text-blue-700">
-              <CheckCircle className="h-3.5 w-3.5 text-blue-600" /> 100% Full Refund Policy Included
-            </div>
-          </div>
-          <a href={`https://wa.me/${WHATSAPP_SUPPORT}?text=${encodeURIComponent("Hi! I am on the payment page for AI Bootcamp and need help with EasyPaisa/JazzCash transfer.")}`}
-            target="_blank" rel="noopener noreferrer"
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-5 py-3.5 text-sm font-bold text-white shadow-lg transition-transform hover:scale-[1.02] hover:bg-[#20bd5a]">
-            <MessageCircle className="h-5 w-5" />
-            👉 Get Payment Assistance on WhatsApp
-          </a>
-          <button onClick={onClose}
-            className="mt-2.5 w-full rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">
-            I&apos;m Transferring EasyPaisa / JazzCash Now
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // ── Step 2 — Payment + Submit ───────────────────────────────────────────────
 function Step2({
   leadId,
   userData,
   onBack,
-  onOpenModal,
 }: {
   leadId: string
   userData: { name: string; email: string; whatsapp: string }
   onBack: () => void
-  onOpenModal?: () => void
 }) {
-  const [loading, setLoading]   = useState(false)
-  const [err, setErr]           = useState<string | null>(null)
-  const [done, setDone]         = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [err, setErr]         = useState<string | null>(null)
 
   const waMessage = `Hi! I have sent Rs. ${COURSE_PRICE.toLocaleString()} for the AI Video Bootcamp.\n\nName: ${userData.name || 'Student'}\nEmail: ${userData.email || ''}\nWhatsApp: ${userData.whatsapp || ''}\n\nI am attaching my payment screenshot below:`
   const waUrl = `https://wa.me/${WHATSAPP_SUPPORT}?text=${encodeURIComponent(waMessage)}`
@@ -314,37 +245,6 @@ function Step2({
     }
   }
 
-  if (done) {
-    return (
-      <div className="text-center py-4">
-        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full text-white shadow-[0_0_30px_rgba(16,185,129,0.4)] bg-emerald-500">
-          <Check className="h-8 w-8" />
-        </div>
-        <h2 className="mt-4 font-['Sora'] text-2xl font-extrabold text-slate-900">
-          Almost Done!
-        </h2>
-        <p className="mt-2 text-sm text-slate-700 font-medium leading-relaxed max-w-sm mx-auto">
-          Please click below to <strong>send your payment screenshot on WhatsApp</strong> so our team can immediately verify and activate your access.
-        </p>
-
-        <a
-          href={waUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-5 inline-flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] px-6 py-4 text-base font-bold text-white shadow-xl transition-transform hover:scale-[1.02] hover:bg-[#20bd5a]"
-        >
-          <MessageCircle className="h-6 w-6" />
-          Send Screenshot on WhatsApp
-        </a>
-
-        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-xs text-emerald-800 font-medium">
-          <CheckCircle className="inline-block h-4 w-4 mr-1 text-emerald-600 align-text-bottom" />
-          Your details are saved. Once verified on WhatsApp, access will be emailed & sent via message.
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div>
       <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700">
@@ -360,20 +260,12 @@ function Step2({
       </p>
 
       {/* Social proof */}
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200/80 bg-emerald-50/60 p-3 text-xs text-slate-700">
-        <div className="flex items-center gap-1.5 font-medium">
-          <div className="flex text-amber-500">
-            {[...Array(5)].map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-amber-400" />)}
-          </div>
-          <span className="font-bold text-slate-900">4.9/5</span>
-          <span className="text-slate-500">(1,120+ Enrolled)</span>
+      <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200/80 bg-emerald-50/60 p-3 text-xs text-slate-700">
+        <div className="flex text-amber-500">
+          {[...Array(5)].map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-amber-400" />)}
         </div>
-        {onOpenModal && (
-          <button type="button" onClick={onOpenModal}
-            className="flex items-center gap-1 font-semibold text-blue-700 hover:underline text-[11px]">
-            <Sparkles className="h-3.5 w-3.5 text-blue-600" /> View Locked Bonuses
-          </button>
-        )}
+        <span className="font-bold text-slate-900">4.9/5</span>
+        <span className="text-slate-500">(1,120+ Enrolled)</span>
       </div>
 
       {/* Payment accounts */}
@@ -387,7 +279,9 @@ function Step2({
       <div className="mt-4 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-4 text-left shadow-sm">
         <div className="flex items-start gap-3">
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-600 text-white shadow-md">
-            <MessageCircle className="h-5 w-5" />
+            <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 5.834h-.004c-1.271-.05-2.521-.349-3.67-.877l-.263-.119-2.727.716.73-2.66-.172-.273a7.53 7.53 0 0 1-1.16-4.03c0-4.188 3.406-7.592 7.594-7.592 4.188 0 7.592 3.404 7.592 7.592 0 4.188-3.404 7.593-7.592 7.593m6.743-13.831c-1.807-1.808-4.209-2.804-6.765-2.804-5.27 0-9.56 4.29-9.56 9.56 0 1.683.439 3.321 1.271 4.762l-1.351 4.94 5.051-1.324a9.55 9.55 0 0 0 4.589 1.173c5.27 0 9.56-4.29 9.56-9.56 0-2.556-.996-4.958-2.795-6.767" />
+            </svg>
           </div>
           <div className="flex-1">
             <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-900">Having trouble paying or need help?</h4>
@@ -395,7 +289,10 @@ function Step2({
             <a href={`https://wa.me/${WHATSAPP_SUPPORT}?text=${encodeURIComponent("Hi! I am on Step 2 (Payment) for the AI Bootcamp and I need help completing my payment.")}`}
               target="_blank" rel="noopener noreferrer"
               className="mt-2.5 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700">
-              <MessageCircle className="h-4 w-4" /> Facing Issue? Chat on WhatsApp
+              <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 5.834h-.004c-1.271-.05-2.521-.349-3.67-.877l-.263-.119-2.727.716.73-2.66-.172-.273a7.53 7.53 0 0 1-1.16-4.03c0-4.188 3.406-7.592 7.594-7.592 4.188 0 7.592 3.404 7.592 7.592 0 4.188-3.404 7.593-7.592 7.593m6.743-13.831c-1.807-1.808-4.209-2.804-6.765-2.804-5.27 0-9.56 4.29-9.56 9.56 0 1.683.439 3.321 1.271 4.762l-1.351 4.94 5.051-1.324a9.55 9.55 0 0 0 4.589 1.173c5.27 0 9.56-4.29 9.56-9.56 0-2.556-.996-4.958-2.795-6.767" />
+              </svg>
+              <span>Facing Issue? Chat on WhatsApp</span>
             </a>
           </div>
         </div>
@@ -407,10 +304,11 @@ function Step2({
         </div>
       )}
 
+      {/* Primary CTA button — Green WhatsApp button matching user design */}
       <button onClick={confirmPayment} disabled={loading}
         className="mt-5 inline-flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] px-6 py-4 text-base font-bold text-white shadow-lg transition-transform hover:scale-[1.02] hover:bg-[#20bd5a] disabled:opacity-70">
         {loading
-          ? <><LoaderCircle className="h-5 w-5 animate-spin" /> Saving…</>
+          ? <><LoaderCircle className="h-5 w-5 animate-spin" /> Connecting…</>
           : <>
               <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 shrink-0">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 5.834h-.004c-1.271-.05-2.521-.349-3.67-.877l-.263-.119-2.727.716.73-2.66-.172-.273a7.53 7.53 0 0 1-1.16-4.03c0-4.188 3.406-7.592 7.594-7.592 4.188 0 7.592 3.404 7.592 7.592 0 4.188-3.404 7.593-7.592 7.593m6.743-13.831c-1.807-1.808-4.209-2.804-6.765-2.804-5.27 0-9.56 4.29-9.56 9.56 0 1.683.439 3.321 1.271 4.762l-1.351 4.94 5.051-1.324a9.55 9.55 0 0 0 4.589 1.173c5.27 0 9.56-4.29 9.56-9.56 0-2.556-.996-4.958-2.795-6.767" />
@@ -435,30 +333,6 @@ export default function EnrollPage() {
   const [step, setStep]   = useState(1)
   const [leadId, setLeadId] = useState<string | null>(null)
   const [userData, setUserDataState] = useState<{ name: string; email: string; whatsapp: string }>({ name: '', email: '', whatsapp: '' })
-  const [showRetentionModal, setShowRetentionModal] = useState(false)
-
-  useEffect(() => {
-    if (step === 2) {
-      const modalShown = sessionStorage.getItem('step2_retention_modal_shown')
-      if (!modalShown) {
-        const timer = setTimeout(() => {
-          setShowRetentionModal(true)
-          sessionStorage.setItem('step2_retention_modal_shown', 'true')
-        }, 8000)
-        const handleMouseLeave = (e: MouseEvent) => {
-          if (e.clientY <= 5) {
-            setShowRetentionModal(true)
-            sessionStorage.setItem('step2_retention_modal_shown', 'true')
-          }
-        }
-        document.addEventListener('mouseleave', handleMouseLeave)
-        return () => {
-          clearTimeout(timer)
-          document.removeEventListener('mouseleave', handleMouseLeave)
-        }
-      }
-    }
-  }, [step])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -541,7 +415,6 @@ export default function EnrollPage() {
                 leadId={leadId}
                 userData={userData}
                 onBack={() => setStep(1)}
-                onOpenModal={() => setShowRetentionModal(true)}
               />
             )}
           </div>
@@ -559,11 +432,6 @@ export default function EnrollPage() {
           </p>
         </div>
       </main>
-
-      <PaymentRetentionModal
-        isOpen={showRetentionModal}
-        onClose={() => setShowRetentionModal(false)}
-      />
 
       {/* WhatsApp floating */}
       <a href={`https://wa.me/${WHATSAPP_SUPPORT}`} target="_blank" rel="noopener noreferrer"
