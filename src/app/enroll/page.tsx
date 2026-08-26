@@ -177,31 +177,31 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
         </div>
       </div>
 
-      <div className="space-y-2 pt-0.5">
+      <div className="space-y-2.5 pt-1">
         <label className="block">
-          <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Full Name *</span>
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Full Name *</span>
           <input type="text" value={name} onChange={e => setName(e.target.value)} maxLength={100}
             placeholder="e.g. Ali Khan" required
-            className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-1.5 text-xs sm:text-sm text-slate-800 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200" />
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 placeholder:text-slate-400" />
         </label>
 
         <label className="block">
-          <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Email *</span>
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Email *</span>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={255}
             placeholder="you@example.com" required
-            className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-1.5 text-xs sm:text-sm text-slate-800 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200" />
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 placeholder:text-slate-400" />
         </label>
 
         <label className="block">
-          <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">WhatsApp Number *</span>
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">WhatsApp Number *</span>
           <input type="tel" value={wa} onChange={e => setWa(e.target.value)} maxLength={20}
             placeholder="03XXXXXXXXX" required
-            className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-1.5 text-xs sm:text-sm text-slate-800 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200" />
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 placeholder:text-slate-400" />
         </label>
       </div>
 
       {/* ── Order Bumps / Upgrades ───────────────────────────────────────── */}
-      <div className="pt-2 space-y-1.5">
+      <div className="pt-2.5 space-y-1.5">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
             <Sparkles className="h-3 w-3 text-amber-500" /> Exclusive Upgrades (Optional)
