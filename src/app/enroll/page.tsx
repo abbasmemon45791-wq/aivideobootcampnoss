@@ -37,24 +37,24 @@ function getGAClientId(): string | undefined {
 // ── Step Indicator ─────────────────────────────────────────────────────────
 function StepBar({ step }: { step: number }) {
   return (
-    <div className="mb-3.5 flex items-center gap-2">
+    <div className="mb-2.5 flex items-center gap-2">
       {[1, 2].map((s, i) => {
         const done = s < step
         const active = s === step
         return (
           <div key={s} className="flex flex-1 items-center gap-2">
-            <div className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold
+            <div className={`grid h-6 w-6 sm:h-7 sm:w-7 shrink-0 place-items-center rounded-full text-xs font-bold
               ${done ? 'bg-gradient-to-br from-blue-600 to-cyan-500 text-white' :
-                active ? 'bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-[0_0_16px_rgba(37,99,235,0.4)]' :
+                active ? 'bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]' :
                 'bg-slate-100 text-slate-400'}`}>
-              {done ? <Check className="h-3.5 w-3.5" /> : s}
+              {done ? <Check className="h-3 w-3" /> : s}
             </div>
             <div className="min-w-0 flex-1">
-              <div className={`truncate text-[11px] sm:text-xs font-semibold uppercase tracking-wider
+              <div className={`truncate text-[10px] sm:text-xs font-semibold uppercase tracking-wider
                 ${done || active ? 'text-slate-800' : 'text-slate-400'}`}>
                 {STEP_LABELS[s]}
               </div>
-              {i < 1 && <div className="mt-1 h-px w-full bg-slate-200" />}
+              {i < 1 && <div className="mt-0.5 h-px w-full bg-slate-200" />}
             </div>
           </div>
         )
@@ -153,95 +153,95 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
   }
 
   return (
-    <form onSubmit={submit} className="space-y-1">
-      <div className="flex items-start justify-between gap-2 mb-2">
+    <form onSubmit={submit} className="space-y-0.5">
+      <div className="flex items-start justify-between gap-2 mb-1.5">
         <div>
-          <h2 className="font-['Sora'] text-xl sm:text-2xl font-extrabold leading-tight text-slate-900">
+          <h2 className="font-['Sora'] text-lg sm:text-xl font-extrabold leading-tight text-slate-900">
             Reserve Your Seat
           </h2>
-          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-500">
             <div className="flex text-amber-500">
               {[...Array(5)].map((_, i) => <Star key={i} className="h-3 w-3 fill-amber-400" />)}
             </div>
             <span className="font-bold text-slate-700">4.9/5</span>
             <span>(1,120+ Enrolled)</span>
           </div>
-          <p className="mt-1 text-[11px] font-semibold text-blue-600">
-            Enroll before price hits Rs {Math.round(BASE_PRICE * 2.75).toLocaleString()}
-          </p>
         </div>
         <div className="shrink-0 text-right">
-          <span className="rounded-full bg-blue-50 border border-blue-200/80 px-2.5 py-1 text-xs font-black text-blue-700">
+          <span className="rounded-full bg-blue-50 border border-blue-200/80 px-2 py-0.5 text-xs font-black text-blue-700">
             Rs. {BASE_PRICE.toLocaleString()}
           </span>
+          <div className="text-[9px] font-semibold text-blue-600">
+            Save 65%
+          </div>
         </div>
       </div>
 
-      <div className="space-y-2.5 pt-1">
+      <div className="space-y-2 pt-0.5">
         <label className="block">
-          <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Full Name *</span>
+          <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Full Name *</span>
           <input type="text" value={name} onChange={e => setName(e.target.value)} maxLength={100}
             placeholder="e.g. Ali Khan" required
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2 text-sm text-slate-800 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-1.5 text-xs sm:text-sm text-slate-800 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200" />
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Email *</span>
+          <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Email *</span>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={255}
             placeholder="you@example.com" required
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2 text-sm text-slate-800 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-1.5 text-xs sm:text-sm text-slate-800 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200" />
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">WhatsApp Number *</span>
+          <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">WhatsApp Number *</span>
           <input type="tel" value={wa} onChange={e => setWa(e.target.value)} maxLength={20}
             placeholder="03XXXXXXXXX" required
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2 text-sm text-slate-800 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-1.5 text-xs sm:text-sm text-slate-800 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200" />
         </label>
       </div>
 
       {/* ── Order Bumps / Upgrades ───────────────────────────────────────── */}
-      <div className="pt-2.5 space-y-2">
+      <div className="pt-2 space-y-1.5">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
             <Sparkles className="h-3 w-3 text-amber-500" /> Exclusive Upgrades (Optional)
           </span>
-          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full">
-            Save up to 80%
+          <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.2 rounded-full">
+            SAVE 80%
           </span>
         </div>
 
         {/* Upsell 1: AI Creator's Cheat Code Vault */}
         <div
           onClick={() => toggleUpsell('vault')}
-          className={`group relative cursor-pointer select-none rounded-xl border p-2.5 sm:p-3 transition-all duration-200 ${
+          className={`group relative cursor-pointer select-none rounded-xl border p-2 sm:p-2.5 transition-all duration-200 ${
             hasVault
-              ? 'border-blue-500 bg-gradient-to-r from-blue-50/90 via-indigo-50/40 to-white shadow-[0_4px_16px_rgba(37,99,235,0.12)] ring-1 ring-blue-500/30'
+              ? 'border-blue-500 bg-gradient-to-r from-blue-50/90 via-indigo-50/40 to-white shadow-[0_2px_12px_rgba(37,99,235,0.12)] ring-1 ring-blue-500/30'
               : 'border-slate-200/90 bg-white hover:border-blue-300 hover:bg-slate-50/70 shadow-2xs'
           }`}
         >
-          <div className="flex items-center gap-2.5">
-            <div className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border text-white transition-all ${
+          <div className="flex items-center gap-2">
+            <div className={`grid h-4.5 w-4.5 shrink-0 place-items-center rounded-md border text-white transition-all ${
               hasVault ? 'border-blue-600 bg-gradient-to-br from-blue-600 to-cyan-500 shadow-2xs' : 'border-slate-300 bg-slate-50 group-hover:border-slate-400'
             }`}>
-              {hasVault && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+              {hasVault && <Check className="h-3 w-3 stroke-[3]" />}
             </div>
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-1.5">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="rounded bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
+                  <span className="rounded bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.2 text-[8px] font-black uppercase tracking-wider text-white shadow-2xs">
                     SPECIAL
                   </span>
                   <span className="font-['Sora'] text-xs sm:text-[13px] font-bold text-slate-900 leading-none">
-                    AI Creator&apos;s Cheat Code Vault
+                    AI Cheat Code Vault
                   </span>
                 </div>
-                <span className="shrink-0 text-xs sm:text-[13px] font-extrabold text-blue-600">
+                <span className="shrink-0 text-xs sm:text-[13px] font-black text-blue-600">
                   +Rs. {VAULT_PRICE}
                 </span>
               </div>
-              <p className="mt-1 text-[11px] leading-tight text-slate-500">
+              <p className="mt-0.5 text-[10px] sm:text-[11px] leading-tight text-slate-500">
                 50+ Midjourney prompts, 5 HD avatars, outreach scripts &amp; blueprints.
               </p>
             </div>
@@ -251,37 +251,37 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
         {/* Upsell 2: Meta Ads Masterclass */}
         <div
           onClick={() => toggleUpsell('meta_ads')}
-          className={`group relative cursor-pointer select-none rounded-xl border p-2.5 sm:p-3 transition-all duration-200 ${
+          className={`group relative cursor-pointer select-none rounded-xl border p-2 sm:p-2.5 transition-all duration-200 ${
             hasMetaAds
-              ? 'border-indigo-500 bg-gradient-to-r from-indigo-50/90 via-purple-50/40 to-white shadow-[0_4px_16px_rgba(99,102,241,0.12)] ring-1 ring-indigo-500/30'
+              ? 'border-indigo-500 bg-gradient-to-r from-indigo-50/90 via-purple-50/40 to-white shadow-[0_2px_12px_rgba(99,102,241,0.12)] ring-1 ring-indigo-500/30'
               : 'border-slate-200/90 bg-white hover:border-indigo-300 hover:bg-slate-50/70 shadow-2xs'
           }`}
         >
-          <div className="flex items-center gap-2.5">
-            <div className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border text-white transition-all ${
+          <div className="flex items-center gap-2">
+            <div className={`grid h-4.5 w-4.5 shrink-0 place-items-center rounded-md border text-white transition-all ${
               hasMetaAds ? 'border-indigo-600 bg-gradient-to-br from-indigo-600 to-purple-500 shadow-2xs' : 'border-slate-300 bg-slate-50 group-hover:border-slate-400'
             }`}>
-              {hasMetaAds && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+              {hasMetaAds && <Check className="h-3 w-3 stroke-[3]" />}
             </div>
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-1.5">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="rounded bg-gradient-to-r from-purple-600 to-indigo-600 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
+                  <span className="rounded bg-gradient-to-r from-purple-600 to-indigo-600 px-1.5 py-0.2 text-[8px] font-black uppercase tracking-wider text-white shadow-2xs">
                     PREMIUM
                   </span>
                   <span className="font-['Sora'] text-xs sm:text-[13px] font-bold text-slate-900 leading-none">
-                    Meta (Facebook) Ads Masterclass
+                    Meta Ads Masterclass
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
                   <span className="text-[10px] text-slate-400 line-through hidden xs:inline">Rs 4,999</span>
-                  <span className="text-xs sm:text-[13px] font-extrabold text-indigo-600">
+                  <span className="text-xs sm:text-[13px] font-black text-indigo-600">
                     +Rs. {META_ADS_PRICE}
                   </span>
                 </div>
               </div>
-              <p className="mt-1 text-[11px] leading-tight text-slate-500">
+              <p className="mt-0.5 text-[10px] sm:text-[11px] leading-tight text-slate-500">
                 Master Facebook &amp; Instagram Ads to scale and land high-paying clients.
               </p>
             </div>
@@ -290,38 +290,38 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
       </div>
 
       {err && (
-        <div className="mt-2.5 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+        <div className="mt-2 flex items-start gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs text-red-700">
           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {err}
         </div>
       )}
 
       {/* ── Dual-Action Apple/Linear Style Submit Button ─────────────────── */}
       <button type="submit" disabled={loading}
-        className="mt-4 group relative inline-flex w-full items-center justify-between overflow-hidden rounded-full p-1.5 pr-4 sm:pr-5 text-white shadow-[0_0_24px_rgba(37,99,235,0.32)] transition-all hover:scale-[1.01] hover:shadow-[0_0_30px_rgba(37,99,235,0.45)] active:scale-[0.99] disabled:opacity-70"
+        className="mt-3 group relative inline-flex w-full items-center justify-between overflow-hidden rounded-full p-1 pr-3 sm:pr-4 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-70"
         style={{ background: 'linear-gradient(135deg,#2563eb,#06b6d4)' }}>
         
         {/* Dynamic Price Pill on Left */}
-        <div className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-2 text-xs sm:text-sm font-extrabold backdrop-blur-md">
+        <div className="flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1.5 text-xs font-extrabold backdrop-blur-md">
           <span>Rs. {totalAmount.toLocaleString()}</span>
           {selectedUpsells.length > 0 && (
-            <span className="rounded-full bg-emerald-400 px-1.5 py-0.5 text-[9px] text-emerald-950 font-black uppercase tracking-wider">
-              +{selectedUpsells.length} UPGRADE{selectedUpsells.length > 1 ? 'S' : ''}
+            <span className="rounded-full bg-emerald-400 px-1 py-0.2 text-[8px] text-emerald-950 font-black uppercase tracking-wider">
+              +{selectedUpsells.length} UP
             </span>
           )}
         </div>
 
         {/* Action text on Right */}
-        <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold tracking-wide">
+        <div className="flex items-center gap-1 text-xs sm:text-sm font-bold tracking-wide">
           {loading ? (
             <><LoaderCircle className="h-4 w-4 animate-spin" /> Saving…</>
           ) : (
-            <>Continue to Payment <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></>
+            <>Continue to Payment <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" /></>
           )}
         </div>
       </button>
 
-      <p className="mt-2.5 flex items-center justify-center gap-1 text-[11px] text-slate-400">
-        <Lock className="h-3 w-3 text-emerald-600" /> 100% Private · Lifetime Access · Instant Verification
+      <p className="mt-1.5 flex items-center justify-center gap-1 text-[10px] text-slate-400">
+        <Lock className="h-2.5 w-2.5 text-emerald-600" /> 100% Private · Lifetime Access · Instant Verification
       </p>
     </form>
   )
@@ -336,14 +336,14 @@ function BankRow({ bank, title, num, colorClass = "text-slate-500" }: { bank: st
     setTimeout(() => setCopied(false), 1500)
   }
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-slate-200/60 py-3.5 last:border-0">
+    <div className="flex items-center justify-between gap-3 border-b border-slate-200/60 py-3 last:border-0">
       <div className="min-w-0">
         <div className={`text-[10px] font-bold uppercase tracking-wider ${colorClass}`}>{bank}</div>
         {title && <div className="mt-0.5 text-xs text-slate-500">{title}</div>}
         <div className="mt-0.5 text-xs font-semibold tracking-wide text-slate-800 sm:text-sm">{num}</div>
       </div>
       <button onClick={copy}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white shadow-xs px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 hover:border-slate-300">
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white shadow-xs px-3 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-50 hover:border-slate-300">
         {copied ? <><Check className="h-3.5 w-3.5 text-blue-600" /> Copied</> : <><Copy className="h-3.5 w-3.5" /> Copy</>}
       </button>
     </div>
@@ -418,31 +418,31 @@ function Step2({
 
       {/* Selected Items Notice */}
       {upsellLabels.length > 0 && (
-        <div className="mt-2.5 rounded-lg border border-blue-200 bg-blue-50/70 px-3 py-2 text-xs text-blue-900">
+        <div className="mt-2 rounded-lg border border-blue-200 bg-blue-50/70 px-2.5 py-1.5 text-xs text-blue-900">
           <span className="font-bold">Includes:</span> AI Video Bootcamp {bundleText}
         </div>
       )}
 
       {/* Payment accounts */}
-      <div className="mt-3 rounded-xl border border-slate-200 bg-white px-3.5 shadow-2xs">
+      <div className="mt-2.5 rounded-xl border border-slate-200 bg-white px-3 shadow-2xs">
         <BankRow bank="EasyPaisa" title={ACCOUNT_TITLE} num={EASYPAISA_NUMBER} colorClass="text-emerald-600" />
         {JAZZCASH_NUMBER && <BankRow bank="JazzCash" num={JAZZCASH_NUMBER} colorClass="text-rose-600" />}
         {HBL_ACCOUNT && <BankRow bank="HBL (Bank Transfer)" title={ACCOUNT_TITLE} num={HBL_ACCOUNT} colorClass="text-teal-700" />}
       </div>
 
       {err && (
-        <div className="mt-2.5 flex items-start gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+        <div className="mt-2 flex items-start gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs text-red-700">
           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {err}
         </div>
       )}
 
       {/* Primary CTA button */}
       <button onClick={confirmPayment} disabled={loading}
-        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-3.5 text-sm sm:text-base font-bold text-white shadow-md transition-transform hover:scale-[1.01] hover:bg-[#20bd5a] disabled:opacity-70">
+        className="mt-3.5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.01] hover:bg-[#20bd5a] disabled:opacity-70">
         {loading
           ? <><LoaderCircle className="h-4 w-4 animate-spin" /> Connecting…</>
           : <>
-              <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 shrink-0">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="h-4.5 w-4.5 shrink-0">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 5.834h-.004c-1.271-.05-2.521-.349-3.67-.877l-.263-.119-2.727.716.73-2.66-.172-.273a7.53 7.53 0 0 1-1.16-4.03c0-4.188 3.406-7.592 7.594-7.592 4.188 0 7.592 3.404 7.592 7.592 0 4.188-3.404 7.593-7.592 7.593m6.743-13.831c-1.807-1.808-4.209-2.804-6.765-2.804-5.27 0-9.56 4.29-9.56 9.56 0 1.683.439 3.321 1.271 4.762l-1.351 4.94 5.051-1.324a9.55 9.55 0 0 0 4.589 1.173c5.27 0 9.56-4.29 9.56-9.56 0-2.556-.996-4.958-2.795-6.767" />
               </svg>
               <span>I&apos;ve Paid — Send Screenshot on WhatsApp</span>
@@ -450,11 +450,11 @@ function Step2({
       </button>
 
       <button onClick={onBack}
-        className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-slate-200 py-2 text-xs font-medium text-slate-500 hover:bg-slate-50">
-        <ArrowLeft className="h-3.5 w-3.5" /> Back
+        className="mt-2.5 inline-flex w-full items-center justify-center gap-1 rounded-full border border-slate-200 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50">
+        <ArrowLeft className="h-3 w-3" /> Back
       </button>
-      <p className="mt-2.5 flex items-center justify-center gap-1 text-[11px] text-slate-400">
-        <Shield className="h-3 w-3 text-emerald-600" /> Secure · One-time payment · Lifetime access
+      <p className="mt-2 flex items-center justify-center gap-1 text-[10px] text-slate-400">
+        <Shield className="h-3 w-3" /> Secure · One-time payment · Lifetime access
       </p>
     </div>
   )
@@ -510,38 +510,38 @@ export default function EnrollPage() {
     <div className="min-h-screen bg-[#fafafa] text-slate-800">
       {/* Universal Top Header */}
       <header className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6 sm:py-3">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-xl font-bold text-xs sm:text-sm text-white shadow-xs" style={{ background: 'linear-gradient(135deg,#2563eb,#06b6d4)' }}>AI</div>
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-1.5 sm:px-6 sm:py-3">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="grid h-7 w-7 sm:h-9 sm:w-9 place-items-center rounded-lg font-bold text-xs sm:text-sm text-white shadow-xs" style={{ background: 'linear-gradient(135deg,#2563eb,#06b6d4)' }}>AI</div>
             <div className="leading-tight">
               <div className="text-xs sm:text-base font-bold tracking-tight text-slate-900">AI Bootcamp</div>
-              <div className="-mt-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.18em] text-blue-600">Pakistan</div>
+              <div className="-mt-0.5 text-[8px] sm:text-[10px] font-bold uppercase tracking-[0.18em] text-blue-600">Pakistan</div>
             </div>
           </Link>
-          <Link href="/" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition shadow-2xs">
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to Course
+          <Link href="/" className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-slate-600 hover:bg-slate-50 transition shadow-2xs">
+            <ArrowLeft className="h-3 w-3" /> Back
           </Link>
         </div>
       </header>
 
-      <main className="mx-auto max-w-lg px-4 py-3.5 sm:px-6 sm:py-8">
+      <main className="mx-auto max-w-lg px-3.5 py-2 sm:px-6 sm:py-6">
         <div className="overflow-hidden rounded-2xl border border-blue-200/60 bg-white shadow-[0_0_40px_rgba(37,99,235,0.08)]">
           {/* Card Header */}
-          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-4 py-2">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-3.5 py-1.5">
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-blue-500" />
               <span className="h-2 w-2 rounded-full bg-amber-400" />
               <span className="h-2 w-2 rounded-full bg-cyan-400" />
             </div>
-            <div className="text-xs font-semibold text-slate-600">
+            <div className="text-[11px] font-semibold text-slate-600">
               Enroll · Step {step} of 2
             </div>
-            <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/50">
+            <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-200/50">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" /> Live
             </div>
           </div>
 
-          <div className="p-4 sm:p-6">
+          <div className="p-3.5 sm:p-5">
             <StepBar step={step} />
 
             {step === 1 && (
@@ -567,9 +567,9 @@ export default function EnrollPage() {
           </div>
         </div>
 
-        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3.5 text-xs text-slate-600">
+        <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-600">
           <div className="font-semibold text-slate-800">Questions or need help?</div>
-          <p className="mt-0.5 text-slate-500">
+          <p className="mt-0.5 text-slate-500 text-[11px]">
             WhatsApp support:{' '}
             <a href={`https://wa.me/${WHATSAPP_SUPPORT}`} target="_blank" rel="noopener noreferrer"
               className="font-bold text-blue-600 hover:underline">
