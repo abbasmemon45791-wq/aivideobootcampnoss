@@ -34,6 +34,25 @@ function getGAClientId(): string | undefined {
   return match ? match[1] : undefined
 }
 
+function getGASessionId(): string | undefined {
+  if (typeof document === 'undefined') return undefined
+  const cookies = document.cookie.split(';')
+  for (const c of cookies) {
+    const trimmed = c.trim()
+    if (trimmed.startsWith('_ga_')) {
+      const parts = trimmed.split('=')
+      if (parts[1]) {
+        const gsParts = parts[1].split('.')
+        // e.g. GS1.1.1724654321.1...
+        if (gsParts.length >= 3 && /^\d+$/.test(gsParts[2])) {
+          return gsParts[2]
+        }
+      }
+    }
+  }
+  return undefined
+}
+
 // ── Step Indicator ─────────────────────────────────────────────────────────
 function StepBar({ step }: { step: number }) {
   return (
@@ -109,6 +128,12 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
       const utm_content  = params.get('utm_content')  || localStorage.getItem('lead_utm_content')  || undefined
 
       const leadEventId = crypto.randomUUID()
+      const gaClientId = getGAClientId()
+      const gaSessionId = getGASessionId()
+      const gclid = localStorage.getItem('lead_gclid') || params.get('gclid') || undefined
+      const wbraid = localStorage.getItem('lead_wbraid') || params.get('wbraid') || undefined
+      const gbraid = localStorage.getItem('lead_gbraid') || params.get('gbraid') || undefined
+      const fbclid = localStorage.getItem('lead_fbclid') || params.get('fbclid') || undefined
 
       const res = await fetch('/api/leads', {
         method: 'POST',
@@ -123,9 +148,12 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
           utm_medium,
           utm_campaign,
           utm_content,
-          gclid:  localStorage.getItem('lead_gclid')  || undefined,
-          fbclid: localStorage.getItem('lead_fbclid') || undefined,
-          ga_client_id: getGAClientId(),
+          gclid,
+          wbraid,
+          gbraid,
+          fbclid,
+          ga_client_id: gaClientId,
+          ga_session_id: gaSessionId,
           eventId: leadEventId,
         }),
       })
@@ -136,7 +164,7 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
         (window as any).fbq('track', 'Lead', { value: totalAmount, currency: 'PKR' }, { eventID: leadEventId })
       }
 
-      // GA4 — fire generate_lead event for audience building
+      // GA4 — fire generate_lead event for audience building and immediate conversion attribution
       fireGA4Event('generate_lead', { value: totalAmount, currency: 'PKR' })
 
       onDone(data.id, {
@@ -376,7 +404,7 @@ function Step2({
     setErr(null)
 
     try {
-      // 1. GA4 funnel tracking
+      // 1. GA4 funnel tracking (begin_checkout)
       fireGA4Event('begin_checkout', { value: userData.totalAmount, currency: 'PKR' })
 
       // 2. Fire backend payment record submission in background with keepalive
@@ -478,12 +506,30 @@ export default function EnrollPage() {
 
       const params = new URLSearchParams(window.location.search)
       const utm = params.get('utm_source') || params.get('ref')
+      const gclid = params.get('gclid')
+      const wbraid = params.get('wbraid')
+      const gbraid = params.get('gbraid')
+      const fbclid = params.get('fbclid')
+
+      // Capture click IDs
+      if (gclid && !localStorage.getItem('lead_gclid')) localStorage.setItem('lead_gclid', gclid)
+      if (wbraid && !localStorage.getItem('lead_wbraid')) localStorage.setItem('lead_wbraid', wbraid)
+      if (gbraid && !localStorage.getItem('lead_gbraid')) localStorage.setItem('lead_gbraid', gbraid)
+      if (fbclid && !localStorage.getItem('lead_fbclid')) localStorage.setItem('lead_fbclid', fbclid)
+
+      // Determine lead source
       if (utm) {
         localStorage.setItem('lead_source', utm.toLowerCase())
+      } else if (gclid || wbraid || gbraid) {
+        localStorage.setItem('lead_source', 'google')
+      } else if (fbclid) {
+        localStorage.setItem('lead_source', 'facebook')
       } else if (!localStorage.getItem('lead_source') && document.referrer) {
         const ref = document.referrer.toLowerCase()
         if (ref.includes('facebook') || ref.includes('fb.com') || ref.includes('instagram')) localStorage.setItem('lead_source', 'facebook')
         else if (ref.includes('google')) localStorage.setItem('lead_source', 'google')
+        else if (ref.includes('tiktok')) localStorage.setItem('lead_source', 'tiktok')
+        else if (ref.includes('youtube')) localStorage.setItem('lead_source', 'youtube')
       }
 
       const utmMedium = params.get('utm_medium')
@@ -492,17 +538,6 @@ export default function EnrollPage() {
       if (utmCampaign) localStorage.setItem('lead_utm_campaign', utmCampaign)
       const utmContent = params.get('utm_content')
       if (utmContent) localStorage.setItem('lead_utm_content', utmContent)
-
-      const gclid = params.get('gclid')
-      if (gclid && !localStorage.getItem('lead_gclid')) {
-        localStorage.setItem('lead_gclid', gclid)
-        if (!localStorage.getItem('lead_source')) localStorage.setItem('lead_source', 'google')
-      }
-      const fbclid = params.get('fbclid')
-      if (fbclid && !localStorage.getItem('lead_fbclid')) {
-        localStorage.setItem('lead_fbclid', fbclid)
-        if (!localStorage.getItem('lead_source')) localStorage.setItem('lead_source', 'facebook')
-      }
     }
   }, [])
 

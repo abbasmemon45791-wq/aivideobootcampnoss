@@ -91,9 +91,37 @@ export async function POST(req: NextRequest) {
               const API_SECRET = process.env.GA4_API_SECRET || 'ZCnSzNHmT5Cte3cAOZ8rVQ'
 
               const gaClientIdFromUtm = l.utm_content?.match(/\[ga:([^\]]+)\]/)?.[1]
+              const gaSessionIdFromUtm = l.utm_content?.match(/\[session:([^\]]+)\]/)?.[1]
+              const wbraidFromUtm = l.utm_content?.match(/\[wbraid:([^\]]+)\]/)?.[1]
+              const gbraidFromUtm = l.utm_content?.match(/\[gbraid:([^\]]+)\]/)?.[1]
+
               const resolvedClientId = l.ga_client_id || gaClientIdFromUtm || (l.email ? hashData(l.email.toLowerCase().trim()).slice(0, 20) : `admin_${Date.now()}`)
+              const resolvedSessionId = l.ga_session_id || gaSessionIdFromUtm
+              const resolvedWbraid = l.wbraid || wbraidFromUtm
+              const resolvedGbraid = l.gbraid || gbraidFromUtm
 
               if (GA4_ID && API_SECRET) {
+                const purchaseParams: Record<string, any> = {
+                  transaction_id: transactionId,
+                  value: coursePrice,
+                  currency: 'PKR',
+                  ...(l.gclid && { gclid: l.gclid }),
+                  ...(resolvedWbraid && { wbraid: resolvedWbraid }),
+                  ...(resolvedGbraid && { gbraid: resolvedGbraid }),
+                  items: [{
+                    item_id:   'ai-bootcamp-pk',
+                    item_name: process.env.COURSE_NAME || 'AI Video Bootcamp Pakistan',
+                    price:     coursePrice,
+                    quantity:  1,
+                  }],
+                }
+
+                // Stitch back to the user's active Google/YouTube ad session in GA4
+                if (resolvedSessionId && !isNaN(Number(resolvedSessionId))) {
+                  purchaseParams.session_id = Number(resolvedSessionId)
+                  purchaseParams.engagement_time_msec = 100
+                }
+
                 await fetch(
                   `https://www.google-analytics.com/mp/collect?measurement_id=${GA4_ID}&api_secret=${API_SECRET}`,
                   {
@@ -103,18 +131,7 @@ export async function POST(req: NextRequest) {
                       client_id: resolvedClientId,
                       events: [{
                         name: 'purchase',
-                        params: {
-                          transaction_id: transactionId,
-                          value: coursePrice,
-                          currency: 'PKR',
-                          ...(l.gclid && { gclid: l.gclid }),
-                          items: [{
-                            item_id:   'ai-bootcamp-pk',
-                            item_name: process.env.COURSE_NAME || 'AI Video Bootcamp Pakistan',
-                            price:     coursePrice,
-                            quantity:  1,
-                          }],
-                        },
+                        params: purchaseParams,
                       }],
                       ...(l.email && {
                         user_properties: {

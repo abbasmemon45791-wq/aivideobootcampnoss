@@ -7,7 +7,7 @@ const hashData = (data: string) => crypto.createHash('sha256').update(data).dige
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { name, email, whatsapp, total_amount, selected_upsells, source, utm_medium, utm_campaign, utm_content, eventId, gclid, fbclid, ga_client_id } = body
+    const { name, email, whatsapp, total_amount, selected_upsells, source, utm_medium, utm_campaign, utm_content, eventId, gclid, wbraid, gbraid, fbclid, ga_client_id, ga_session_id } = body
 
     // Validation
     if (!name || name.trim().length < 2 || name.length > 100)
@@ -29,15 +29,20 @@ export async function POST(req: NextRequest) {
     const fbc = cookieHeader.match(/_fbc=([^;]+)/)?.[1]
     const fbp = cookieHeader.match(/_fbp=([^;]+)/)?.[1]
     const gaCookie = cookieHeader.match(/_ga=(?:GA\d\.\d\.)?(\d+\.\d+)/)?.[1]
+    const gaSessionCookie = cookieHeader.match(/_ga_[A-Z0-9]+=GS\d\.\d\.(\d+)/)?.[1]
     const resolvedGaClientId = ga_client_id?.trim() || gaCookie || null
+    const resolvedGaSessionId = ga_session_id?.trim() || gaSessionCookie || null
 
     const site = process.env.NEXT_PUBLIC_SITE_NAME || 'techpulse-noss'
 
     const gaTag = resolvedGaClientId ? ` [ga:${resolvedGaClientId}]` : ''
+    const sessionTag = resolvedGaSessionId ? ` [session:${resolvedGaSessionId}]` : ''
+    const wbraidTag = wbraid ? ` [wbraid:${wbraid}]` : ''
+    const gbraidTag = gbraid ? ` [gbraid:${gbraid}]` : ''
     const siteTag = ` [site:${site}]`
     const upsellTag = selected_upsells?.length ? ` [upsells:${selected_upsells.join(',')}]` : ''
     const amountTag = ` [amount:${finalAmount}]`
-    const updatedUtmContent = utm_content ? `${utm_content}${siteTag}${gaTag}${upsellTag}${amountTag}` : `${siteTag}${gaTag}${upsellTag}${amountTag}`
+    const updatedUtmContent = utm_content ? `${utm_content}${siteTag}${gaTag}${sessionTag}${wbraidTag}${gbraidTag}${upsellTag}${amountTag}` : `${siteTag}${gaTag}${sessionTag}${wbraidTag}${gbraidTag}${upsellTag}${amountTag}`
 
     // Check duplicate email — if already pending or submitted, update and return existing lead
     const { data: existing } = await supabaseAdmin
@@ -74,8 +79,11 @@ export async function POST(req: NextRequest) {
       utm_campaign: utm_campaign?.trim() || null,
       utm_content: updatedUtmContent.trim(),
       gclid: gclid?.trim() || null,
+      wbraid: wbraid?.trim() || null,
+      gbraid: gbraid?.trim() || null,
       fbclid: fbclid?.trim() || null,
       ...(resolvedGaClientId ? { ga_client_id: resolvedGaClientId } : {}),
+      ...(resolvedGaSessionId ? { ga_session_id: resolvedGaSessionId } : {}),
     }
 
     let insertRes = await supabaseAdmin
@@ -84,8 +92,11 @@ export async function POST(req: NextRequest) {
       .select('id')
       .single()
 
-    // Fallback if ga_client_id or site column does not exist in Supabase yet
+    // Fallback if ga_session_id, wbraid, gbraid, ga_client_id, or site column does not exist in Supabase yet
     if (insertRes.error) {
+      delete leadPayload.ga_session_id
+      delete leadPayload.wbraid
+      delete leadPayload.gbraid
       delete leadPayload.ga_client_id
       insertRes = await supabaseAdmin.from('leads').insert(leadPayload).select('id').single()
       if (insertRes.error && insertRes.error.message?.includes('site')) {
