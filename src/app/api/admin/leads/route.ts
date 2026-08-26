@@ -156,23 +156,22 @@ export async function POST(req: NextRequest) {
 
     // ── 1. GA4 Measurement Protocol (server-side) ─────────────────────────
     // This is guaranteed delivery — no ad blockers, no page-load timing issues.
-    // Uses the real browser GA client_id (or fallback) + gclid so Google Ads attributes the conversion.
+    // Uses the real browser GA client_id (or fallback from utm_content) + gclid so Google Ads attributes the conversion.
     try {
       const GA4_ID     = process.env.NEXT_PUBLIC_GA4_ID || 'G-Y2SZLNREPD'
-      const API_SECRET = process.env.GA4_API_SECRET
+      const API_SECRET = process.env.GA4_API_SECRET || 'ZCnSzNHmT5Cte3cAOZ8rVQ'
 
-      if (API_SECRET && lead.ga_client_id) {
+      const gaClientIdFromUtm = lead.utm_content?.match(/\[ga:([^\]]+)\]/)?.[1]
+      const resolvedClientId = lead.ga_client_id || gaClientIdFromUtm || (lead.email ? hashData(lead.email.toLowerCase().trim()).slice(0, 20) : `admin_${Date.now()}`)
+
+      if (GA4_ID && API_SECRET) {
         await fetch(
           `https://www.google-analytics.com/mp/collect?measurement_id=${GA4_ID}&api_secret=${API_SECRET}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              client_id: lead.ga_client_id,
-              user_data: {
-                sha256_email_address: lead.email ? [hashData(lead.email.toLowerCase().trim())] : undefined,
-                sha256_phone_number:  lead.whatsapp ? [hashData(lead.whatsapp.replace(/\D/g, ''))] : undefined,
-              },
+              client_id: resolvedClientId,
               events: [
                 {
                   name: 'purchase',
@@ -180,10 +179,11 @@ export async function POST(req: NextRequest) {
                     transaction_id: transactionId,
                     value:          coursePrice,
                     currency:       'PKR',
+                    ...(lead.gclid && { gclid: lead.gclid }),
                     items: [
                       {
-                        item_id:   'ai-video-bootcamp',
-                        item_name: 'AI Video Bootcamp',
+                        item_id:   'ai-bootcamp-pk',
+                        item_name: process.env.COURSE_NAME || 'AI Video Bootcamp Pakistan',
                         price:     coursePrice,
                         quantity:  1,
                       },
@@ -191,6 +191,11 @@ export async function POST(req: NextRequest) {
                   },
                 },
               ],
+              ...(lead.email && {
+                user_properties: {
+                  email: { value: lead.email },
+                },
+              }),
             }),
           }
         )
@@ -203,7 +208,7 @@ export async function POST(req: NextRequest) {
 
     // ── 2. Facebook CAPI Purchase (server-side) ────────────────────────────
     try {
-      const PIXEL_ID     = process.env.NEXT_PUBLIC_FB_PIXEL_ID
+      const PIXEL_ID     = process.env.NEXT_PUBLIC_FB_PIXEL_ID || '2170349516868440'
       const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN
 
       if (PIXEL_ID && ACCESS_TOKEN && lead.email) {
