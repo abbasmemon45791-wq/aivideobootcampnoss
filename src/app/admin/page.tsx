@@ -163,12 +163,25 @@ function LeadRow({ lead, token, onUpdate, isSelected, onToggleSelect }: { lead: 
     }
   }
 
+  const upsellsMatch = lead.utm_content?.match(/\[upsells:([^\]]+)\]/)
+  const upsellList = upsellsMatch ? upsellsMatch[1].split(',') : []
+  const hasVault = upsellList.includes('vault')
+  const hasMetaAds = upsellList.includes('meta_ads')
+  const amountMatch = lead.utm_content?.match(/\[amount:(\d+)\]/)
+  const expectedAmount = amountMatch ? Number(amountMatch[1]) : (1999 + (hasVault ? 499 : 0) + (hasMetaAds ? 999 : 0))
+
   const handleSendAccess = () => {
     if (!lead.access_sent) {
       markAccessSent()
     }
     const formattedWa = formatWhatsAppNumber(lead.whatsapp)
-    window.open(`https://wa.me/${formattedWa}?text=${encodeURIComponent(`Hi ${lead.name},\n\nYour payment for the AI Bootcamp has been verified! 🎉\n\nHere is your course access link:\nhttps://your-lms-link.com\n\nHappy learning!`)}`, '_blank')
+    const addons: string[] = []
+    if (hasVault) addons.push("AI Creator's Cheat Code Vault")
+    if (hasMetaAds) addons.push("Meta (Facebook) Ads Masterclass")
+    const addonText = addons.length > 0 ? ` + ${addons.join(' + ')}` : ''
+
+    const message = `Hi ${lead.name},\n\nYour payment for the AI Video Bootcamp${addonText} has been verified! 🎉\n\nHere is your course access link:\nhttps://your-lms-link.com\n\nHappy learning!`
+    window.open(`https://wa.me/${formattedWa}?text=${encodeURIComponent(message)}`, '_blank')
   }
 
   const uaInfo = parseUA(lead.user_agent)
@@ -190,8 +203,18 @@ function LeadRow({ lead, token, onUpdate, isSelected, onToggleSelect }: { lead: 
             <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold ${
               isSite2 ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' : 'bg-purple-50 text-purple-700 border border-purple-200'
             }`}>
-              {isSite2 ? 'Site 2 (No SS / 1999)' : 'Site 1 (SS / 1999)'}
+              {isSite2 ? 'Site 2 (No SS)' : 'Site 1 (SS)'}
             </span>
+            {hasVault && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-orange-50 text-orange-700 border border-orange-200 px-1.5 py-0.5 text-[10px] font-bold">
+                🟧 + Vault (499)
+              </span>
+            )}
+            {hasMetaAds && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 text-[10px] font-bold">
+                🟪 + Meta Ads (999)
+              </span>
+            )}
           </div>
           <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-slate-500">
             <span className="truncate max-w-[120px] sm:max-w-none">{lead.email}</span>
@@ -204,18 +227,19 @@ function LeadRow({ lead, token, onUpdate, isSelected, onToggleSelect }: { lead: 
             )}
             <span>{new Date(lead.created_at).toLocaleDateString('en-PK')}</span>
           </div>
-          {payment && (
-            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
-              {payment.amount && <span className="text-slate-900 font-bold">Paid: Rs. {payment.amount.toLocaleString()}</span>}
-              {payment.recipient_number && <span className="text-slate-500">→ {payment.recipient_number}</span>}
-              {payment.transaction_id && <span className="font-mono text-slate-400">{payment.transaction_id}</span>}
-              {payment.ai_verified !== undefined && (
-                <span className={`font-semibold ${payment.ai_verified ? 'text-emerald-600' : 'text-amber-600'}`}>
-                  {payment.ai_verified ? '✓ AI Verified' : '⚠ Not AI Verified'}
-                </span>
-              )}
-            </div>
-          )}
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
+            <span className="text-slate-600 font-medium">Expected: Rs. {expectedAmount.toLocaleString()}</span>
+            {payment?.amount && (
+              <span className="text-slate-900 font-bold">Paid: Rs. {payment.amount.toLocaleString()}</span>
+            )}
+            {payment?.recipient_number && <span className="text-slate-500">→ {payment.recipient_number}</span>}
+            {payment?.transaction_id && <span className="font-mono text-slate-400">{payment.transaction_id}</span>}
+            {payment?.ai_verified !== undefined && (
+              <span className={`font-semibold ${payment.ai_verified ? 'text-emerald-600' : 'text-amber-600'}`}>
+                {payment.ai_verified ? '✓ AI Verified' : '⚠ Not AI Verified'}
+              </span>
+            )}
+          </div>
         </div>
         </div>
 

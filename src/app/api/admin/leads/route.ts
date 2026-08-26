@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
   // Fetch lead for conversion data
   const { data: lead } = await supabaseAdmin
     .from('leads')
-    .select('id, name, email, whatsapp, gclid, site, utm_content')
+    .select('*')
     .eq('id', leadId)
     .maybeSingle()
 
@@ -135,7 +135,8 @@ export async function POST(req: NextRequest) {
       })
       .eq('id', currentPaymentId)
   } else if (action === 'approve') {
-    coursePrice = Number(process.env.COURSE_PRICE) || 1999
+    const match = lead?.utm_content?.match(/\[amount:(\d+)\]/)
+    coursePrice = match ? Number(match[1]) : (Number(process.env.COURSE_PRICE) || 1999)
     await supabaseAdmin
       .from('payments')
       .insert({
@@ -155,43 +156,41 @@ export async function POST(req: NextRequest) {
 
     // ── 1. GA4 Measurement Protocol (server-side) ─────────────────────────
     // This is guaranteed delivery — no ad blockers, no page-load timing issues.
-    // Requires: NEXT_PUBLIC_GA4_ID (G-XXXXXXXXXX) + GA4_API_SECRET (from GA4 → Admin → Data Streams → Measurement Protocol API secrets)
+    // Uses the real browser GA client_id (or fallback) + gclid so Google Ads attributes the conversion.
     try {
       const GA4_ID     = process.env.NEXT_PUBLIC_GA4_ID || 'G-Y2SZLNREPD'
-      const API_SECRET = process.env.GA4_API_SECRET || 'ZCnSzNHmT5Cte3cAOZ8rVQ'
+      const API_SECRET = process.env.GA4_API_SECRET
 
-      if (GA4_ID && API_SECRET) {
+      if (API_SECRET && lead.ga_client_id) {
         await fetch(
           `https://www.google-analytics.com/mp/collect?measurement_id=${GA4_ID}&api_secret=${API_SECRET}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              // client_id is required by GA4 MP — use a stable per-user value.
-              // Ideally passed from browser (ga4 cookie), here we use email hash as fallback.
-              client_id: lead.email
-                ? hashData(lead.email.toLowerCase().trim()).slice(0, 20)
-                : `admin_${Date.now()}`,
-              events: [{
-                name: 'purchase',
-                params: {
-                  transaction_id: transactionId,
-                  value: coursePrice,
-                  currency: 'PKR',
-                  items: [{
-                    item_id:   'ai-bootcamp-pk',
-                    item_name: process.env.COURSE_NAME || 'AI Video Bootcamp Pakistan',
-                    price:     coursePrice,
-                    quantity:  1,
-                  }],
+              client_id: lead.ga_client_id,
+              user_data: {
+                sha256_email_address: lead.email ? [hashData(lead.email.toLowerCase().trim())] : undefined,
+                sha256_phone_number:  lead.whatsapp ? [hashData(lead.whatsapp.replace(/\D/g, ''))] : undefined,
+              },
+              events: [
+                {
+                  name: 'purchase',
+                  params: {
+                    transaction_id: transactionId,
+                    value:          coursePrice,
+                    currency:       'PKR',
+                    items: [
+                      {
+                        item_id:   'ai-video-bootcamp',
+                        item_name: 'AI Video Bootcamp',
+                        price:     coursePrice,
+                        quantity:  1,
+                      },
+                    ],
+                  },
                 },
-              }],
-              // Enhanced measurement user properties
-              ...(lead.email && {
-                user_properties: {
-                  email: { value: lead.email },
-                },
-              }),
+              ],
             }),
           }
         )

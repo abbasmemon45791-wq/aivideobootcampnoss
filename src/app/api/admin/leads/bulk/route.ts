@@ -51,13 +51,14 @@ export async function POST(req: NextRequest) {
       if (action === 'approve') {
         const { data: leadsToApprove } = await supabaseAdmin
           .from('leads')
-          .select('id, name, email, whatsapp, site, utm_content, payments(id, amount)')
+          .select('*, payments(id, amount)')
           .in('id', leadIds)
 
         if (leadsToApprove) {
           for (const l of leadsToApprove) {
             const existingPayment = (l.payments as any)?.[0]
-            const coursePrice = existingPayment?.amount ? Number(existingPayment.amount) : (Number(process.env.COURSE_PRICE) || 1999)
+            const match = l?.utm_content?.match(/\[amount:(\d+)\]/)
+            const coursePrice = existingPayment?.amount ? Number(existingPayment.amount) : (match ? Number(match[1]) : (Number(process.env.COURSE_PRICE) || 1999))
 
             if (existingPayment?.id) {
               await supabaseAdmin
@@ -89,6 +90,9 @@ export async function POST(req: NextRequest) {
               const GA4_ID     = process.env.NEXT_PUBLIC_GA4_ID || 'G-Y2SZLNREPD'
               const API_SECRET = process.env.GA4_API_SECRET || 'ZCnSzNHmT5Cte3cAOZ8rVQ'
 
+              const gaClientIdFromUtm = l.utm_content?.match(/\[ga:([^\]]+)\]/)?.[1]
+              const resolvedClientId = l.ga_client_id || gaClientIdFromUtm || (l.email ? hashData(l.email.toLowerCase().trim()).slice(0, 20) : `admin_${Date.now()}`)
+
               if (GA4_ID && API_SECRET) {
                 await fetch(
                   `https://www.google-analytics.com/mp/collect?measurement_id=${GA4_ID}&api_secret=${API_SECRET}`,
@@ -96,15 +100,14 @@ export async function POST(req: NextRequest) {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      client_id: l.email
-                        ? hashData(l.email.toLowerCase().trim()).slice(0, 20)
-                        : `admin_${Date.now()}`,
+                      client_id: resolvedClientId,
                       events: [{
                         name: 'purchase',
                         params: {
                           transaction_id: transactionId,
                           value: coursePrice,
                           currency: 'PKR',
+                          ...(l.gclid && { gclid: l.gclid }),
                           items: [{
                             item_id:   'ai-bootcamp-pk',
                             item_name: process.env.COURSE_NAME || 'AI Video Bootcamp Pakistan',
@@ -128,7 +131,7 @@ export async function POST(req: NextRequest) {
 
             // Meta CAPI
             try {
-              const PIXEL_ID     = process.env.NEXT_PUBLIC_FB_PIXEL_ID
+              const PIXEL_ID     = process.env.NEXT_PUBLIC_FB_PIXEL_ID || '2170349516868440'
               const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN
 
               if (PIXEL_ID && ACCESS_TOKEN && l.email) {

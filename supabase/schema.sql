@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS leads (
   user_agent TEXT,
   gclid VARCHAR(255),  -- Google click ID (from ?gclid= param)
   fbclid VARCHAR(255), -- Meta click ID (from ?fbclid= param)
+  ga_client_id VARCHAR(100), -- GA4 browser client ID for server-side purchase matching
   
   -- Access Tracking
   access_sent BOOLEAN DEFAULT FALSE,
@@ -37,7 +38,8 @@ CREATE TABLE IF NOT EXISTS leads (
 --   ADD COLUMN IF NOT EXISTS utm_content VARCHAR(255),
 --   ADD COLUMN IF NOT EXISTS user_agent TEXT,
 --   ADD COLUMN IF NOT EXISTS gclid VARCHAR(255),
---   ADD COLUMN IF NOT EXISTS fbclid VARCHAR(255);
+--   ADD COLUMN IF NOT EXISTS fbclid VARCHAR(255),
+--   ADD COLUMN IF NOT EXISTS ga_client_id VARCHAR(100);
 -- ==========================================
 
 -- PAYMENTS table: Step 3 screenshot submission

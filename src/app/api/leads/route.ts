@@ -7,7 +7,7 @@ const hashData = (data: string) => crypto.createHash('sha256').update(data).dige
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { name, email, whatsapp, source, utm_medium, utm_campaign, utm_content, eventId, gclid, fbclid } = body
+    const { name, email, whatsapp, total_amount, selected_upsells, source, utm_medium, utm_campaign, utm_content, eventId, gclid, fbclid, ga_client_id } = body
 
     // Validation
     if (!name || name.trim().length < 2 || name.length > 100)
@@ -17,7 +17,29 @@ export async function POST(req: NextRequest) {
     if (!/^[+\d\s-]{7,20}$/.test(whatsapp))
       return NextResponse.json({ error: 'Please enter a valid WhatsApp number.' }, { status: 400 })
 
-    // Check duplicate email — if already pending or submitted, return existing lead
+    const finalAmount = Number(total_amount) || 1999
+
+    // Get IP and User-Agent for basic rate limiting / fraud tracking / attribution
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 
+                req.headers.get('x-real-ip') ?? 'unknown'
+    const userAgent = req.headers.get('user-agent') ?? 'unknown'
+
+    // Extract Meta and GA browser cookies for signal quality
+    const cookieHeader = req.headers.get('cookie') ?? ''
+    const fbc = cookieHeader.match(/_fbc=([^;]+)/)?.[1]
+    const fbp = cookieHeader.match(/_fbp=([^;]+)/)?.[1]
+    const gaCookie = cookieHeader.match(/_ga=(?:GA\d\.\d\.)?(\d+\.\d+)/)?.[1]
+    const resolvedGaClientId = ga_client_id?.trim() || gaCookie || null
+
+    const site = process.env.NEXT_PUBLIC_SITE_NAME || 'techpulse-noss'
+
+    const gaTag = resolvedGaClientId ? ` [ga:${resolvedGaClientId}]` : ''
+    const siteTag = ` [site:${site}]`
+    const upsellTag = selected_upsells?.length ? ` [upsells:${selected_upsells.join(',')}]` : ''
+    const amountTag = ` [amount:${finalAmount}]`
+    const updatedUtmContent = utm_content ? `${utm_content}${siteTag}${gaTag}${upsellTag}${amountTag}` : `${siteTag}${gaTag}${upsellTag}${amountTag}`
+
+    // Check duplicate email — if already pending or submitted, update and return existing lead
     const { data: existing } = await supabaseAdmin
       .from('leads')
       .select('id, status')
@@ -26,61 +48,50 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
 
     if (existing) {
+      if (existing.status === 'pending') {
+        await supabaseAdmin
+          .from('leads')
+          .update({
+            utm_content: updatedUtmContent.trim(),
+            name: name.trim(),
+            whatsapp: whatsapp.trim(),
+          })
+          .eq('id', existing.id)
+      }
       return NextResponse.json({ id: existing.id, existing: true })
     }
 
-    // Get IP and User-Agent for basic rate limiting / fraud tracking / attribution
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 
-                req.headers.get('x-real-ip') ?? 'unknown'
-    const userAgent = req.headers.get('user-agent') ?? 'unknown'
-
-    // Extract Meta browser cookies for CAPI signal quality
-    const cookieHeader = req.headers.get('cookie') ?? ''
-    const fbc = cookieHeader.match(/_fbc=([^;]+)/)?.[1]
-    const fbp = cookieHeader.match(/_fbp=([^;]+)/)?.[1]
-
-    const site = process.env.NEXT_PUBLIC_SITE_NAME || 'techpulse-noss'
+    const leadPayload: Record<string, any> = {
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      whatsapp: whatsapp.trim(),
+      ip_address: ip,
+      user_agent: userAgent,
+      status: 'pending',
+      site: site,
+      source: source || 'direct',
+      utm_medium: utm_medium?.trim() || null,
+      utm_campaign: utm_campaign?.trim() || null,
+      utm_content: updatedUtmContent.trim(),
+      gclid: gclid?.trim() || null,
+      fbclid: fbclid?.trim() || null,
+      ...(resolvedGaClientId ? { ga_client_id: resolvedGaClientId } : {}),
+    }
 
     let insertRes = await supabaseAdmin
       .from('leads')
-      .insert({
-        name: name.trim(),
-        email: email.toLowerCase().trim(),
-        whatsapp: whatsapp.trim(),
-        ip_address: ip,
-        user_agent: userAgent,
-        status: 'pending',
-        site: site,
-        source: source || 'direct',
-        utm_medium: utm_medium?.trim() || null,
-        utm_campaign: utm_campaign?.trim() || null,
-        utm_content: utm_content?.trim() || null,
-        gclid: gclid?.trim() || null,
-        fbclid: fbclid?.trim() || null,
-      })
+      .insert(leadPayload)
       .select('id')
       .single()
 
-    // If site column doesn't exist yet in Supabase, retry without site column
-    if (insertRes.error && insertRes.error.message?.includes('site')) {
-      insertRes = await supabaseAdmin
-        .from('leads')
-        .insert({
-          name: name.trim(),
-          email: email.toLowerCase().trim(),
-          whatsapp: whatsapp.trim(),
-          ip_address: ip,
-          user_agent: userAgent,
-          status: 'pending',
-          source: source || 'direct',
-          utm_medium: utm_medium?.trim() || null,
-          utm_campaign: utm_campaign?.trim() || null,
-          utm_content: utm_content ? `${utm_content} [site:${site}]` : `[site:${site}]`,
-          gclid: gclid?.trim() || null,
-          fbclid: fbclid?.trim() || null,
-        })
-        .select('id')
-        .single()
+    // Fallback if ga_client_id or site column does not exist in Supabase yet
+    if (insertRes.error) {
+      delete leadPayload.ga_client_id
+      insertRes = await supabaseAdmin.from('leads').insert(leadPayload).select('id').single()
+      if (insertRes.error && insertRes.error.message?.includes('site')) {
+        delete leadPayload.site
+        insertRes = await supabaseAdmin.from('leads').insert(leadPayload).select('id').single()
+      }
     }
 
     const { data, error } = insertRes
@@ -88,7 +99,7 @@ export async function POST(req: NextRequest) {
 
     // Send Facebook CAPI Lead Event
     try {
-      const PIXEL_ID = '2170349516868440'
+      const PIXEL_ID = process.env.NEXT_PUBLIC_FB_PIXEL_ID || '2170349516868440'
       const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN
       if (PIXEL_ID && ACCESS_TOKEN) {
         const hashedEmail = hashData(email.toLowerCase().trim())
@@ -119,12 +130,12 @@ export async function POST(req: NextRequest) {
                 },
                 custom_data: {
                   currency: 'PKR',
-                  value: Number(process.env.COURSE_PRICE) || 2900,
+                  value: finalAmount,
                 },
               }
             ]
           })
-        })
+        }).catch(err => console.error('FB CAPI Error (Lead):', err))
       }
     } catch (fbErr) {
       console.error('FB CAPI Error (Lead):', fbErr)

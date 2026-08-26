@@ -23,16 +23,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Lead not found.' }, { status: 404 })
     }
 
-    // Insert payment record (no screenshot)
-    const { error: paymentError } = await supabaseAdmin
+    // Check if a payment already exists for this lead
+    const { data: existingPayment } = await supabaseAdmin
       .from('payments')
-      .insert({
-        lead_id: leadId,
-        amount: amount ?? 1999,
-        ai_verified: false,
-      })
+      .select('id')
+      .eq('lead_id', leadId)
+      .maybeSingle()
 
-    if (paymentError) throw paymentError
+    if (existingPayment) {
+      await supabaseAdmin
+        .from('payments')
+        .update({ amount: Number(amount) || 1999 })
+        .eq('id', existingPayment.id)
+    } else {
+      const { error: paymentError } = await supabaseAdmin
+        .from('payments')
+        .insert({
+          lead_id: leadId,
+          amount: Number(amount) || 1999,
+          ai_verified: false,
+        })
+
+      if (paymentError) throw paymentError
+    }
 
     // Update lead status to payment_submitted
     await supabaseAdmin

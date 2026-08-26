@@ -10,7 +10,10 @@ import {
 // GA4 event helper (browser-side — for non-purchase events only)
 // Purchase is fired server-side via GA4 Measurement Protocol on admin approval
 
-const COURSE_PRICE = 1999
+const BASE_PRICE = 1999
+const VAULT_PRICE = 499
+const META_ADS_PRICE = 999
+
 const EASYPAISA_NUMBER = process.env.NEXT_PUBLIC_EASYPAISA_NUMBER ?? '03458996578'
 const JAZZCASH_NUMBER  = process.env.NEXT_PUBLIC_JAZZCASH_NUMBER  ?? '03180236635'
 const HBL_ACCOUNT      = process.env.NEXT_PUBLIC_HBL_ACCOUNT      ?? '22567902223303'
@@ -23,6 +26,12 @@ const STEP_LABELS: Record<number, string> = { 1: 'Your Details', 2: 'Send Paymen
 function fireGA4Event(eventName: string, params: Record<string, unknown>) {
   if (typeof window === 'undefined' || !(window as any).gtag) return
   ;(window as any).gtag('event', eventName, params)
+}
+
+function getGAClientId(): string | undefined {
+  if (typeof document === 'undefined') return undefined
+  const match = document.cookie.match(/_ga=(?:GA\d\.\d\.)?(\d+\.\d+)/)
+  return match ? match[1] : undefined
 }
 
 // ── Step Indicator ─────────────────────────────────────────────────────────
@@ -55,12 +64,23 @@ function StepBar({ step }: { step: number }) {
 }
 
 // ── Step 1 — Details ───────────────────────────────────────────────────────
-function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; email: string; whatsapp: string }) => void }) {
-  const [name, setName]     = useState('')
-  const [email, setEmail]   = useState('')
-  const [wa, setWa]         = useState('')
-  const [err, setErr]       = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; email: string; whatsapp: string; totalAmount: number; selectedUpsells: string[] }) => void }) {
+  const [name, setName]         = useState('')
+  const [email, setEmail]       = useState('')
+  const [wa, setWa]             = useState('')
+  const [selectedUpsells, setSelectedUpsells] = useState<string[]>([])
+  const [err, setErr]           = useState<string | null>(null)
+  const [loading, setLoading]   = useState(false)
+
+  const toggleUpsell = (key: string) => {
+    setSelectedUpsells(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    )
+  }
+
+  const hasVault = selectedUpsells.includes('vault')
+  const hasMetaAds = selectedUpsells.includes('meta_ads')
+  const totalAmount = BASE_PRICE + (hasVault ? VAULT_PRICE : 0) + (hasMetaAds ? META_ADS_PRICE : 0)
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -97,12 +117,15 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
           name: name.trim(),
           email: email.trim().toLowerCase(),
           whatsapp: wa.trim(),
+          total_amount: totalAmount,
+          selected_upsells: selectedUpsells,
           source,
           utm_medium,
           utm_campaign,
           utm_content,
           gclid:  localStorage.getItem('lead_gclid')  || undefined,
           fbclid: localStorage.getItem('lead_fbclid') || undefined,
+          ga_client_id: getGAClientId(),
           eventId: leadEventId,
         }),
       })
@@ -110,13 +133,19 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
       if (!res.ok) throw new Error(data.error)
 
       if (typeof window !== 'undefined' && (window as any).fbq) {
-        (window as any).fbq('track', 'Lead', {}, { eventID: leadEventId })
+        (window as any).fbq('track', 'Lead', { value: totalAmount, currency: 'PKR' }, { eventID: leadEventId })
       }
 
       // GA4 — fire generate_lead event for audience building
-      fireGA4Event('generate_lead', { value: COURSE_PRICE, currency: 'PKR' })
+      fireGA4Event('generate_lead', { value: totalAmount, currency: 'PKR' })
 
-      onDone(data.id, { name: name.trim(), email: email.trim().toLowerCase(), whatsapp: wa.trim() })
+      onDone(data.id, {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        whatsapp: wa.trim(),
+        totalAmount,
+        selectedUpsells,
+      })
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
       setLoading(false)
@@ -132,7 +161,7 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
         style={{ background: 'linear-gradient(135deg,#2563eb,#06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
         Reserve Your Seat.
       </h2>
-      <p className="text-sm font-semibold text-blue-600">Enroll before price hits Rs {(COURSE_PRICE * 2.75).toLocaleString()}</p>
+      <p className="text-sm font-semibold text-blue-600">Enroll before price hits Rs {(BASE_PRICE * 2.75).toLocaleString()}</p>
 
       <div className="mt-4 space-y-3">
         <label className="block">
@@ -157,6 +186,111 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
         </label>
       </div>
 
+      {/* ── Order Bumps / Upgrades ───────────────────────────────────────── */}
+      <div className="mt-5 space-y-3">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          Exclusive One-Time Upgrades:
+        </div>
+
+        {/* Upsell 1: AI Creator's Cheat Code Vault */}
+        <div
+          onClick={() => toggleUpsell('vault')}
+          className={`cursor-pointer rounded-2xl border-2 border-dashed p-4 transition-all duration-200 ${
+            hasVault
+              ? 'border-orange-500 bg-[#0f172a] shadow-[0_0_24px_rgba(249,115,22,0.22)] ring-1 ring-orange-500/40'
+              : 'border-slate-700 bg-[#0b0f19] hover:border-orange-400/60'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <div className="pt-0.5">
+              <input
+                type="checkbox"
+                checked={hasVault}
+                onChange={() => {}} // handled by parent div onClick
+                className="h-5 w-5 rounded border-2 border-slate-400 bg-slate-900 text-orange-500 focus:ring-orange-500 focus:ring-offset-0 cursor-pointer"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-md bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
+                  SPECIAL UPGRADE
+                </span>
+                <span className="font-['Sora'] text-sm sm:text-base font-bold text-white">
+                  Add the AI Creator&apos;s Cheat Code Vault
+                </span>
+              </div>
+              <p className="mt-1.5 text-xs leading-relaxed text-slate-300">
+                Get 50+ Midjourney prompts, 5 premade HD characters, client outreach scripts &amp; Fiverr/Upwork blueprints.
+              </p>
+              <div className="mt-2 text-xs font-bold text-amber-400 sm:text-sm">
+                + Rs. {VAULT_PRICE.toLocaleString()} <span className="font-normal text-slate-400">(Only Rs. {(BASE_PRICE + VAULT_PRICE).toLocaleString()} Total)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Upsell 2: Meta Ads Masterclass */}
+        <div
+          onClick={() => toggleUpsell('meta_ads')}
+          className={`cursor-pointer rounded-2xl border-2 border-dashed p-4 transition-all duration-200 ${
+            hasMetaAds
+              ? 'border-purple-500 bg-[#0f172a] shadow-[0_0_24px_rgba(168,85,247,0.22)] ring-1 ring-purple-500/40'
+              : 'border-slate-700 bg-[#0b0f19] hover:border-purple-400/60'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <div className="pt-0.5">
+              <input
+                type="checkbox"
+                checked={hasMetaAds}
+                onChange={() => {}} // handled by parent div onClick
+                className="h-5 w-5 rounded border-2 border-slate-400 bg-slate-900 text-purple-600 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-md bg-gradient-to-r from-purple-600 to-indigo-500 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
+                  PREMIUM UPGRADE
+                </span>
+                <span className="font-['Sora'] text-sm sm:text-base font-bold text-white">
+                  Add Marketian: Meta (Facebook) Ads Masterclass
+                </span>
+              </div>
+              <p className="mt-1.5 text-xs leading-relaxed text-slate-300">
+                Master Facebook &amp; Instagram Ads to scale your business and land high-paying client contracts. Save 80% today!
+              </p>
+              <div className="mt-2 text-xs font-bold text-amber-400 sm:text-sm">
+                + Rs. {META_ADS_PRICE.toLocaleString()} <span className="font-normal text-slate-400 line-through">(Usually Rs. 4,999)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Dynamic Order Summary ────────────────────────────────────────── */}
+      <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+        <div className="flex justify-between py-0.5">
+          <span className="text-slate-600">AI Video Bootcamp (Lifetime)</span>
+          <span className="font-semibold text-slate-900">Rs. {BASE_PRICE.toLocaleString()}</span>
+        </div>
+        {hasVault && (
+          <div className="flex justify-between py-0.5 text-orange-700">
+            <span>+ AI Creator&apos;s Cheat Code Vault</span>
+            <span className="font-semibold">+Rs. {VAULT_PRICE.toLocaleString()}</span>
+          </div>
+        )}
+        {hasMetaAds && (
+          <div className="flex justify-between py-0.5 text-purple-700">
+            <span>+ Meta Ads Masterclass</span>
+            <span className="font-semibold">+Rs. {META_ADS_PRICE.toLocaleString()}</span>
+          </div>
+        )}
+        <div className="mt-1.5 flex justify-between border-t border-slate-200 pt-1.5 text-sm font-bold text-slate-900">
+          <span>Total Investment</span>
+          <span className="text-blue-600">Rs. {totalAmount.toLocaleString()}</span>
+        </div>
+      </div>
+
       {err && (
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {err}
@@ -168,7 +302,7 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
         style={{ background: 'linear-gradient(135deg,#2563eb,#06b6d4)' }}>
         {loading
           ? <><LoaderCircle className="h-4 w-4 animate-spin" /> Saving…</>
-          : <>Continue to Payment →</>}
+          : <>Continue to Payment — Rs. {totalAmount.toLocaleString()} →</>}
       </button>
 
       <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-400">
@@ -208,13 +342,18 @@ function Step2({
   onBack,
 }: {
   leadId: string
-  userData: { name: string; email: string; whatsapp: string }
+  userData: { name: string; email: string; whatsapp: string; totalAmount: number; selectedUpsells: string[] }
   onBack: () => void
 }) {
   const [loading, setLoading] = useState(false)
   const [err, setErr]         = useState<string | null>(null)
 
-  const waMessage = `Hi! I have sent Rs. ${COURSE_PRICE.toLocaleString()} for the AI Video Bootcamp.\n\nName: ${userData.name || 'Student'}\nEmail: ${userData.email || ''}\nWhatsApp: ${userData.whatsapp || ''}\n\nI am attaching my payment screenshot below:`
+  const upsellLabels: string[] = []
+  if (userData.selectedUpsells?.includes('vault')) upsellLabels.push("AI Cheat Code Vault")
+  if (userData.selectedUpsells?.includes('meta_ads')) upsellLabels.push("Meta Ads Masterclass")
+  const bundleText = upsellLabels.length > 0 ? ` + ${upsellLabels.join(' + ')}` : ''
+
+  const waMessage = `Hi! I have sent Rs. ${userData.totalAmount.toLocaleString()} for the AI Video Bootcamp${bundleText}.\n\nName: ${userData.name || 'Student'}\nEmail: ${userData.email || ''}\nWhatsApp: ${userData.whatsapp || ''}\n\nI am attaching my payment screenshot below:`
   const waUrl = `https://wa.me/${WHATSAPP_SUPPORT}?text=${encodeURIComponent(waMessage)}`
 
   const confirmPayment = () => {
@@ -223,7 +362,7 @@ function Step2({
 
     try {
       // 1. GA4 funnel tracking
-      fireGA4Event('begin_checkout', { value: COURSE_PRICE, currency: 'PKR' })
+      fireGA4Event('begin_checkout', { value: userData.totalAmount, currency: 'PKR' })
 
       // 2. Fire backend payment record submission in background with keepalive
       fetch('/api/submit-payment', {
@@ -231,7 +370,7 @@ function Step2({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           leadId,
-          amount: COURSE_PRICE,
+          amount: userData.totalAmount,
         }),
         keepalive: true,
       }).catch(e => console.error('[submit-payment error]', e))
@@ -257,8 +396,15 @@ function Step2({
       </h2>
       <p className="mt-2 flex items-center gap-1.5 text-sm text-slate-500">
         <Lock className="h-3.5 w-3.5 text-blue-600" />
-        Send <strong className="text-slate-800 mx-1">exactly Rs. {COURSE_PRICE.toLocaleString()}</strong> to any account below.
+        Send <strong className="text-slate-800 mx-1">exactly Rs. {userData.totalAmount.toLocaleString()}</strong> to any account below.
       </p>
+
+      {/* Selected Items Notice */}
+      {upsellLabels.length > 0 && (
+        <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-xs text-blue-900">
+          <span className="font-bold">Includes:</span> AI Video Bootcamp {bundleText}
+        </div>
+      )}
 
       {/* Social proof */}
       <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200/80 bg-emerald-50/60 p-3 text-xs text-slate-700">
@@ -333,7 +479,13 @@ function Step2({
 export default function EnrollPage() {
   const [step, setStep]   = useState(1)
   const [leadId, setLeadId] = useState<string | null>(null)
-  const [userData, setUserDataState] = useState<{ name: string; email: string; whatsapp: string }>({ name: '', email: '', whatsapp: '' })
+  const [userData, setUserDataState] = useState<{
+    name: string
+    email: string
+    whatsapp: string
+    totalAmount: number
+    selectedUpsells: string[]
+  }>({ name: '', email: '', whatsapp: '', totalAmount: BASE_PRICE, selectedUpsells: [] })
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -407,7 +559,13 @@ export default function EnrollPage() {
             {step === 1 && (
               <Step1 onDone={(id, data) => {
                 setLeadId(id)
-                setUserDataState({ name: data.name, email: data.email, whatsapp: data.whatsapp })
+                setUserDataState({
+                  name: data.name,
+                  email: data.email,
+                  whatsapp: data.whatsapp,
+                  totalAmount: data.totalAmount,
+                  selectedUpsells: data.selectedUpsells,
+                })
                 setStep(2)
               }} />
             )}
