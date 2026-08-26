@@ -2,9 +2,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
-  ArrowLeft, User, Wallet, Check,
+  ArrowLeft, ArrowRight, User, Wallet, Check,
   Lock, LoaderCircle, Copy, Shield,
-  AlertCircle, Star
+  AlertCircle, Star, Sparkles
 } from 'lucide-react'
 
 // GA4 event helper (browser-side — for non-purchase events only)
@@ -37,7 +37,7 @@ function getGAClientId(): string | undefined {
 // ── Step Indicator ─────────────────────────────────────────────────────────
 function StepBar({ step }: { step: number }) {
   return (
-    <div className="mb-4 flex items-center gap-1.5 sm:gap-2">
+    <div className="mb-3.5 flex items-center gap-1.5 sm:gap-2">
       {[1, 2].map((s, i) => {
         const done = s < step
         const active = s === step
@@ -154,77 +154,84 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
 
   return (
     <form onSubmit={submit} className="space-y-1">
-      <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700">
-        <User className="h-3.5 w-3.5" /> Step 1 of 2
+      <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50/80 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-700">
+        <User className="h-3 w-3" /> Step 1 of 2
       </div>
-      <h2 className="mt-2 font-['Sora'] text-2xl font-extrabold leading-tight sm:text-3xl"
+      <h2 className="mt-1 font-['Sora'] text-2xl font-extrabold leading-tight sm:text-3xl"
         style={{ background: 'linear-gradient(135deg,#2563eb,#06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
         Reserve Your Seat.
       </h2>
-      <p className="text-sm font-semibold text-blue-600">Enroll before price hits Rs {(BASE_PRICE * 2.75).toLocaleString()}</p>
+      <p className="text-xs sm:text-sm font-semibold text-blue-600">
+        Enroll before price hits Rs {Math.round(BASE_PRICE * 2.75).toLocaleString()}
+      </p>
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-3.5 space-y-2.5">
         <label className="block">
-          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-500">Full Name *</span>
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Full Name *</span>
           <input type="text" value={name} onChange={e => setName(e.target.value)} maxLength={100}
             placeholder="e.g. Ali Khan" required
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2 text-sm text-slate-800 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-500">Email *</span>
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Email *</span>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={255}
             placeholder="you@example.com" required
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2 text-sm text-slate-800 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-500">WhatsApp Number *</span>
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">WhatsApp Number *</span>
           <input type="tel" value={wa} onChange={e => setWa(e.target.value)} maxLength={20}
             placeholder="03XXXXXXXXX" required
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2 text-sm text-slate-800 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
         </label>
       </div>
 
       {/* ── Order Bumps / Upgrades ───────────────────────────────────────── */}
-      <div className="mt-5 space-y-3">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-          Exclusive One-Time Upgrades:
+      <div className="mt-3.5 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+            <Sparkles className="h-3 w-3 text-amber-500" /> Exclusive Upgrades (Optional)
+          </span>
+          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full">
+            Save up to 80%
+          </span>
         </div>
 
         {/* Upsell 1: AI Creator's Cheat Code Vault */}
         <div
           onClick={() => toggleUpsell('vault')}
-          className={`cursor-pointer rounded-2xl border-2 border-dashed p-4 transition-all duration-200 ${
+          className={`group relative cursor-pointer select-none rounded-xl border p-2.5 sm:p-3 transition-all duration-200 ${
             hasVault
-              ? 'border-orange-500 bg-[#0f172a] shadow-[0_0_24px_rgba(249,115,22,0.22)] ring-1 ring-orange-500/40'
-              : 'border-slate-700 bg-[#0b0f19] hover:border-orange-400/60'
+              ? 'border-blue-500 bg-gradient-to-r from-blue-50/90 via-indigo-50/40 to-white shadow-[0_4px_16px_rgba(37,99,235,0.12)] ring-1 ring-blue-500/30'
+              : 'border-slate-200/90 bg-white hover:border-blue-300 hover:bg-slate-50/70 shadow-2xs'
           }`}
         >
-          <div className="flex items-start gap-3">
-            <div className="pt-0.5">
-              <input
-                type="checkbox"
-                checked={hasVault}
-                onChange={() => {}} // handled by parent div onClick
-                className="h-5 w-5 rounded border-2 border-slate-400 bg-slate-900 text-orange-500 focus:ring-orange-500 focus:ring-offset-0 cursor-pointer"
-              />
+          <div className="flex items-center gap-2.5">
+            <div className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border text-white transition-all ${
+              hasVault ? 'border-blue-600 bg-gradient-to-br from-blue-600 to-cyan-500 shadow-2xs' : 'border-slate-300 bg-slate-50 group-hover:border-slate-400'
+            }`}>
+              {hasVault && <Check className="h-3.5 w-3.5 stroke-[3]" />}
             </div>
+
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-md bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
-                  SPECIAL UPGRADE
-                </span>
-                <span className="font-['Sora'] text-sm sm:text-base font-bold text-white">
-                  Add the AI Creator&apos;s Cheat Code Vault
+              <div className="flex items-center justify-between gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="rounded bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
+                    SPECIAL
+                  </span>
+                  <span className="font-['Sora'] text-xs sm:text-[13px] font-bold text-slate-900 leading-none">
+                    AI Creator&apos;s Cheat Code Vault
+                  </span>
+                </div>
+                <span className="shrink-0 text-xs sm:text-[13px] font-extrabold text-blue-600">
+                  +Rs. {VAULT_PRICE}
                 </span>
               </div>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-300">
-                Get 50+ Midjourney prompts, 5 premade HD characters, client outreach scripts &amp; Fiverr/Upwork blueprints.
+              <p className="mt-1 text-[11px] leading-tight text-slate-500">
+                50+ Midjourney prompts, 5 HD avatars, outreach scripts &amp; blueprints.
               </p>
-              <div className="mt-2 text-xs font-bold text-amber-400 sm:text-sm">
-                + Rs. {VAULT_PRICE.toLocaleString()} <span className="font-normal text-slate-400">(Only Rs. {(BASE_PRICE + VAULT_PRICE).toLocaleString()} Total)</span>
-              </div>
             </div>
           </div>
         </div>
@@ -232,81 +239,77 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
         {/* Upsell 2: Meta Ads Masterclass */}
         <div
           onClick={() => toggleUpsell('meta_ads')}
-          className={`cursor-pointer rounded-2xl border-2 border-dashed p-4 transition-all duration-200 ${
+          className={`group relative cursor-pointer select-none rounded-xl border p-2.5 sm:p-3 transition-all duration-200 ${
             hasMetaAds
-              ? 'border-purple-500 bg-[#0f172a] shadow-[0_0_24px_rgba(168,85,247,0.22)] ring-1 ring-purple-500/40'
-              : 'border-slate-700 bg-[#0b0f19] hover:border-purple-400/60'
+              ? 'border-indigo-500 bg-gradient-to-r from-indigo-50/90 via-purple-50/40 to-white shadow-[0_4px_16px_rgba(99,102,241,0.12)] ring-1 ring-indigo-500/30'
+              : 'border-slate-200/90 bg-white hover:border-indigo-300 hover:bg-slate-50/70 shadow-2xs'
           }`}
         >
-          <div className="flex items-start gap-3">
-            <div className="pt-0.5">
-              <input
-                type="checkbox"
-                checked={hasMetaAds}
-                onChange={() => {}} // handled by parent div onClick
-                className="h-5 w-5 rounded border-2 border-slate-400 bg-slate-900 text-purple-600 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer"
-              />
+          <div className="flex items-center gap-2.5">
+            <div className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border text-white transition-all ${
+              hasMetaAds ? 'border-indigo-600 bg-gradient-to-br from-indigo-600 to-purple-500 shadow-2xs' : 'border-slate-300 bg-slate-50 group-hover:border-slate-400'
+            }`}>
+              {hasMetaAds && <Check className="h-3.5 w-3.5 stroke-[3]" />}
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-md bg-gradient-to-r from-purple-600 to-indigo-500 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
-                  PREMIUM UPGRADE
-                </span>
-                <span className="font-['Sora'] text-sm sm:text-base font-bold text-white">
-                  Add Marketian: Meta (Facebook) Ads Masterclass
-                </span>
-              </div>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-300">
-                Master Facebook &amp; Instagram Ads to scale your business and land high-paying client contracts. Save 80% today!
-              </p>
-              <div className="mt-2 text-xs font-bold text-amber-400 sm:text-sm">
-                + Rs. {META_ADS_PRICE.toLocaleString()} <span className="font-normal text-slate-400 line-through">(Usually Rs. 4,999)</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* ── Dynamic Order Summary ────────────────────────────────────────── */}
-      <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
-        <div className="flex justify-between py-0.5">
-          <span className="text-slate-600">AI Video Bootcamp (Lifetime)</span>
-          <span className="font-semibold text-slate-900">Rs. {BASE_PRICE.toLocaleString()}</span>
-        </div>
-        {hasVault && (
-          <div className="flex justify-between py-0.5 text-orange-700">
-            <span>+ AI Creator&apos;s Cheat Code Vault</span>
-            <span className="font-semibold">+Rs. {VAULT_PRICE.toLocaleString()}</span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="rounded bg-gradient-to-r from-purple-600 to-indigo-600 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-2xs">
+                    PREMIUM
+                  </span>
+                  <span className="font-['Sora'] text-xs sm:text-[13px] font-bold text-slate-900 leading-none">
+                    Meta (Facebook) Ads Masterclass
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-[10px] text-slate-400 line-through hidden xs:inline">Rs 4,999</span>
+                  <span className="text-xs sm:text-[13px] font-extrabold text-indigo-600">
+                    +Rs. {META_ADS_PRICE}
+                  </span>
+                </div>
+              </div>
+              <p className="mt-1 text-[11px] leading-tight text-slate-500">
+                Master Facebook &amp; Instagram Ads to scale and land high-paying client contracts.
+              </p>
+            </div>
           </div>
-        )}
-        {hasMetaAds && (
-          <div className="flex justify-between py-0.5 text-purple-700">
-            <span>+ Meta Ads Masterclass</span>
-            <span className="font-semibold">+Rs. {META_ADS_PRICE.toLocaleString()}</span>
-          </div>
-        )}
-        <div className="mt-1.5 flex justify-between border-t border-slate-200 pt-1.5 text-sm font-bold text-slate-900">
-          <span>Total Investment</span>
-          <span className="text-blue-600">Rs. {totalAmount.toLocaleString()}</span>
         </div>
       </div>
 
       {err && (
-        <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {err}
+        <div className="mt-2.5 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {err}
         </div>
       )}
 
+      {/* ── Dual-Action Apple/Linear Style Submit Button ─────────────────── */}
       <button type="submit" disabled={loading}
-        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-base font-semibold text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-transform hover:scale-[1.02] disabled:opacity-70"
+        className="mt-4 group relative inline-flex w-full items-center justify-between overflow-hidden rounded-full p-1.5 pr-4 sm:pr-5 text-white shadow-[0_0_24px_rgba(37,99,235,0.32)] transition-all hover:scale-[1.01] hover:shadow-[0_0_30px_rgba(37,99,235,0.45)] active:scale-[0.99] disabled:opacity-70"
         style={{ background: 'linear-gradient(135deg,#2563eb,#06b6d4)' }}>
-        {loading
-          ? <><LoaderCircle className="h-4 w-4 animate-spin" /> Saving…</>
-          : <>Continue to Payment — Rs. {totalAmount.toLocaleString()} →</>}
+        
+        {/* Dynamic Price Pill on Left */}
+        <div className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-2 text-xs sm:text-sm font-extrabold backdrop-blur-md">
+          <span>Rs. {totalAmount.toLocaleString()}</span>
+          {selectedUpsells.length > 0 && (
+            <span className="rounded-full bg-emerald-400 px-1.5 py-0.5 text-[9px] text-emerald-950 font-black uppercase tracking-wider">
+              +{selectedUpsells.length} UPGRADE{selectedUpsells.length > 1 ? 'S' : ''}
+            </span>
+          )}
+        </div>
+
+        {/* Action text on Right */}
+        <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold tracking-wide">
+          {loading ? (
+            <><LoaderCircle className="h-4 w-4 animate-spin" /> Saving…</>
+          ) : (
+            <>Continue to Payment <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></>
+          )}
+        </div>
       </button>
 
-      <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-400">
-        <Lock className="h-3.5 w-3.5" /> Your details are private — used only to send your access.
+      <p className="mt-2.5 flex items-center justify-center gap-1 text-[11px] text-slate-400">
+        <Lock className="h-3 w-3 text-emerald-600" /> 100% Private · Lifetime Access · Instant Verification
       </p>
     </form>
   )
