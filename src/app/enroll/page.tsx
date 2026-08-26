@@ -297,25 +297,25 @@ function Step1({ onDone }: { onDone: (leadId: string, data: { name: string; emai
 
       {/* ── Dual-Action Apple/Linear Style Submit Button ─────────────────── */}
       <button type="submit" disabled={loading}
-        className="mt-3 group relative inline-flex w-full items-center justify-between overflow-hidden rounded-full p-1 pr-3 sm:pr-4 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-70"
+        className="mt-3.5 group relative inline-flex w-full items-center justify-between overflow-hidden rounded-full p-1.5 pr-4 sm:pr-5 text-white shadow-[0_4px_24px_rgba(37,99,235,0.38)] transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-70 cursor-pointer"
         style={{ background: 'linear-gradient(135deg,#2563eb,#06b6d4)' }}>
         
         {/* Dynamic Price Pill on Left */}
-        <div className="flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1.5 text-xs font-extrabold backdrop-blur-md">
+        <div className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-2 text-xs sm:text-sm font-black backdrop-blur-md">
           <span>Rs. {totalAmount.toLocaleString()}</span>
           {selectedUpsells.length > 0 && (
-            <span className="rounded-full bg-emerald-400 px-1 py-0.2 text-[8px] text-emerald-950 font-black uppercase tracking-wider">
+            <span className="rounded-full bg-emerald-400 px-1.5 py-0.5 text-[8.5px] text-emerald-950 font-black uppercase tracking-wider">
               +{selectedUpsells.length} UP
             </span>
           )}
         </div>
 
         {/* Action text on Right */}
-        <div className="flex items-center gap-1 text-xs sm:text-sm font-bold tracking-wide">
+        <div className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold tracking-wide">
           {loading ? (
             <><LoaderCircle className="h-4 w-4 animate-spin" /> Saving…</>
           ) : (
-            <>Continue to Payment <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" /></>
+            <>Continue to Payment <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></>
           )}
         </div>
       </button>
